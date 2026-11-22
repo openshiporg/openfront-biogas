@@ -22,6 +22,13 @@ const LISTS: Record<string, { create: string; update: string; input: string; fie
     reactorWarrantyMonths: 'int', partsWarrantyMonths: 'int', installHours: 'decimal', surveyKind: 'text', isPublished: 'bool',
   } },
   KitComponent: { create: 'createKitComponent', update: 'updateKitComponent', input: 'KitComponent', fields: { kit: 'relation', component: 'relation', quantity: 'int', isPublished: 'bool' } },
+  Customer: { create: 'createCustomer', update: 'updateCustomer', input: 'Customer', fields: {
+    type: 'text', name: 'text', organisationName: 'text', phone: 'text', altPhone: 'text', email: 'text', preferredLanguage: 'text', preferredContact: 'text', notes: 'text',
+  } },
+  CustomerContact: { create: 'createCustomerContact', update: 'updateCustomerContact', input: 'CustomerContact', fields: { customer: 'relation', name: 'text', role: 'text', phone: 'text', email: 'text', isPrimary: 'bool' } },
+  Site: { create: 'createSite', update: 'updateSite', input: 'Site', fields: {
+    customer: 'relation', label: 'text', addressLine: 'text', city: 'text', region: 'text', country: 'text', postcode: 'text', lat: 'decimal', lng: 'decimal', directions: 'text', siteType: 'text',
+  } },
   Supplier: { create: 'createSupplier', update: 'updateSupplier', input: 'Supplier', fields: { name: 'text', contact: 'text', phone: 'text', email: 'text', country: 'text', leadTimeDays: 'int' } },
 };
 
