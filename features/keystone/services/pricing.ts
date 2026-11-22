@@ -21,7 +21,7 @@ export function priceLines<T extends PriceLine>(lines: T[], settings: Pick<Setti
   }
   const totals = lines.map(l => l.quantity * l.unitAmount)
   const subtotalAmount = totals.filter(t => t > 0).reduce((a, b) => a + b, 0)
-  const discountAmount = -totals.filter(t => t < 0).reduce((a, b) => a + b, 0)
+  const discountAmount = 0 - totals.filter(t => t < 0).reduce((a, b) => a + b, 0)
   if (discountAmount > subtotalAmount) throw new DomainError(Codes.INVALID_INPUT, 'Discounts cannot be more than the price.')
   const taxablePositive = lines.reduce((sum, l, i) => sum + (l.taxable && totals[i] > 0 ? totals[i] : 0), 0)
   // Discounts spread over taxable and non-taxable value in proportion.
