@@ -132,7 +132,17 @@ function ReferencePay({ code, method, amount, currencyCode }: { code: string; me
   const [phone, setPhone] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, start] = useTransition()
+  const [sent, setSent] = useState<string | null>(null)
   const router = useRouter()
+  // Once sent, the form gives way to the waiting status so nobody sends the same payment twice.
+  if (sent) {
+    return (
+      <div className="rounded-[14px] bg-[var(--sage)] p-4" role="status">
+        <p className="font-bold text-[var(--forest)]">We have your reference <span className="font-mono">{sent}</span></p>
+        <p className="mt-1">We are checking the {money(amount, currencyCode)} {method.label} payment and will confirm it, usually the same working day.</p>
+      </div>
+    )
+  }
   return (
     <form
       className="space-y-4"
@@ -144,6 +154,7 @@ function ReferencePay({ code, method, amount, currencyCode }: { code: string; me
           const r = await submitOfflinePaymentAction({ code, provider: method.code, reference: ref.trim(), payerPhone: phone.trim() || undefined, idempotencyKey: key })
           if (!r.ok) return setError(r.error)
           renew()
+          setSent(ref.trim())
           router.push(`/pay/${code}`)
           router.refresh()
         })
@@ -161,7 +172,7 @@ function ReferencePay({ code, method, amount, currencyCode }: { code: string; me
         </div>
         {method.code === 'mobile_money' && (
           <div>
-            <label htmlFor="payer" className="sf-label">Phone you paid from</label>
+            <label htmlFor="payer" className="sf-label">Phone you paid from <span className="font-normal text-[var(--muted)]">(optional)</span></label>
             <input id="payer" type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="sf-input" autoComplete="tel" />
           </div>
         )}

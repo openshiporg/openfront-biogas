@@ -6,6 +6,7 @@ import { date, money, statusText, word } from '../lib/format'
 import { Notice, PageHead, Rows, Section, Status } from '../components/ui'
 import { QuoteAccept } from '../components/QuoteAccept'
 import { PayPanel } from '../components/PayPanel'
+import { gqlOrNull } from '../lib/data/client'
 import { VisitChange } from '../components/VisitChange'
 import { PrepList } from '../components/PrepList'
 
@@ -46,8 +47,10 @@ export async function QuoteScreen({ code }: { code: string }) {
 /* ------------------------------------------------------------------ S12, S13, S14 pay a link */
 
 export async function PayScreen({ code }: { code: string }) {
-  const [s, store] = await Promise.all([getPaySession(code), getStore()])
+  const [s, store, providers] = await Promise.all([getPaySession(code), getStore(), gqlOrNull<{ paymentProviders: { code: string; name: string }[] }>('{ paymentProviders { code name } }')])
   if (!s) notFound()
+  // The company's own name for each method (e.g. "Zelle or Venmo"), also once the pay form has closed.
+  const methodName = (c: string) => s.methods.find((m: any) => m.code === c)?.label || providers?.paymentProviders.find(p => p.code === c)?.name || word(c)
   const what = s.description || word(s.purpose)
   return (
     <>
@@ -78,7 +81,7 @@ export async function PayScreen({ code }: { code: string }) {
           {s.payments.length > 0 && (
             <>
               <h3 className="mt-5 font-bold">Payments</h3>
-              <ul className="mt-2 space-y-1 text-[0.95rem]">{s.payments.map((p: any, i: number) => <li key={i} className="flex justify-between gap-2"><span>{s.methods.find((m: any) => m.code === p.method)?.label ?? word(p.method)} {p.reference ? <span className="font-mono text-sm">{p.reference}</span> : null}</span><Status value={p.status} /></li>)}</ul>
+              <ul className="mt-2 space-y-1 text-[0.95rem]">{s.payments.map((p: any, i: number) => <li key={i} className="flex justify-between gap-2"><span>{methodName(p.method)} {p.reference ? <span className="font-mono text-sm">{p.reference}</span> : null}</span><Status value={p.status} /></li>)}</ul>
             </>
           )}
         </aside>

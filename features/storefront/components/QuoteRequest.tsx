@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { bookSurveyAction, checkAreaAction, submitQuoteRequestAction } from '../lib/actions'
 import { minorFromMajor, money } from '../lib/format'
@@ -147,8 +147,11 @@ function Thanks({ done, timeZone, surveyFeeAmount, currencyCode, slotKey, area, 
   const [slot, setSlot] = useState<{ date: string; slotIndex: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, start] = useTransition()
+  // The form was long; bring the confirmation to the top of the screen.
+  const top = useRef<HTMLDivElement>(null)
+  useEffect(() => { top.current?.scrollIntoView({ block: 'start' }); top.current?.focus() }, [])
   return (
-    <div className="space-y-6" role="status">
+    <div ref={top} tabIndex={-1} className="scroll-mt-24 space-y-6 outline-none" role="status">
       <div className="sf-card p-6">
         <h2 className="text-2xl font-extrabold">Thank you, we have your request</h2>
         <p className="mt-2 text-lg">Your reference is <strong className="text-[var(--clay)]">{done.leadNumber}</strong>. {done.served ? `Our ${done.areaName ?? ''} team will be in touch shortly.` : 'We will let you know whether we can reach you.'}</p>
@@ -169,10 +172,10 @@ function Thanks({ done, timeZone, surveyFeeAmount, currencyCode, slotKey, area, 
           {surveyFeeAmount > 0 && <p>The survey costs {money(surveyFeeAmount, currencyCode)}, taken off your system if you go ahead.</p>}
           <SlotPicker value={slot} onChange={setSlot} area={{ postcode: area.postcode || undefined, region: area.region || undefined, country }} timeZone={timeZone} />
           <FormError error={error} />
-          <button
+          {slot && <button
             type="button"
             className="sf-btn"
-            disabled={!slot || pending}
+            disabled={pending}
             onClick={() =>
               start(async () => {
                 setError(null)
@@ -183,7 +186,7 @@ function Thanks({ done, timeZone, surveyFeeAmount, currencyCode, slotKey, area, 
             }
           >
             {pending ? 'Booking…' : 'Book this time'}
-          </button>
+          </button>}
         </div>
       ) : null}
       <p><Link href="/" className="font-bold text-[var(--clay)] hover:underline">Back to the home page</Link></p>
