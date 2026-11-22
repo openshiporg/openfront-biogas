@@ -141,7 +141,7 @@ export async function completeCart(uow: UnitOfWork, actor: Actor, cartId: string
     const p = byId.get(l.productId)!
     return { kind: 'product', productId: p.id, name: p.name, sku: p.sku, quantity: l.quantity, unitAmount: p.priceAmount, taxable: p.taxable, warrantyMonths: p.warrantyMonths ?? 0, requiresInstallation: false, snapshot: { name: p.name, sku: p.sku, priceAmount: p.priceAmount, warrantyMonths: p.warrantyMonths ?? 0, type: p.type } }
   })
-  if (priced.discountAmount > 0) lines.push({ kind: 'discount', productId: null as never, name: `Service plan discount (${priced.planDiscountPercent}%)`, sku: '', quantity: 1, unitAmount: -priced.discountAmount, taxable: false, warrantyMonths: 0, requiresInstallation: false, snapshot: {} })
+  if (priced.discountAmount > 0) lines.push({ kind: 'discount', productId: null as never, name: `Service plan discount (${priced.planDiscountPercent}%)`, sku: '', quantity: 1, unitAmount: -priced.discountAmount, taxable: false, warrantyMonths: 0, requiresInstallation: false, snapshot: {} as never })
   const area = cart.serviceAreaId ? await tx.serviceArea.findUnique({ where: { id: cart.serviceAreaId } }) : null
   const channel = actor.kind === 'user' && !actor.customerId && actor.permissions.has('canAccessDashboard') ? 'staff' : 'shop'
   const order = await createOrderFromLines(uow, actor, {

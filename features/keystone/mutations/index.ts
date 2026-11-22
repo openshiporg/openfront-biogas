@@ -1,21 +1,27 @@
-import { mergeSchemas } from "@graphql-tools/schema";
-import type { GraphQLSchema } from 'graphql';
-import redirectToInit from "./redirectToInit";
+import { mergeSchemas } from '@graphql-tools/schema'
+import type { GraphQLSchema } from 'graphql'
+import redirectToInit from './redirectToInit'
+import { storefrontResolvers, storefrontTypeDefs } from './storefront'
+import { staffResolvers, staffTypeDefs } from './staff'
 
-const graphql = String.raw;
+const graphql = String.raw
 
+// Every domain resolver checks permission in its service and runs as one idempotent command: the state
+// change, audit rows and webhook records commit in one transaction (features/keystone/lib).
 export function extendGraphqlSchema(baseSchema: GraphQLSchema) {
-  return mergeSchemas({
+  const core = mergeSchemas({
     schemas: [baseSchema],
     typeDefs: graphql`
+      scalar JSON
       type Query {
         redirectToInit: Boolean
       }
     `,
-    resolvers: {
-      Query: { 
-        redirectToInit,
-      },
-    },
-  });
+    resolvers: { Query: { redirectToInit } },
+  })
+  return mergeSchemas({
+    schemas: [core],
+    typeDefs: [storefrontTypeDefs, staffTypeDefs],
+    resolvers: [storefrontResolvers, staffResolvers] as never,
+  })
 }

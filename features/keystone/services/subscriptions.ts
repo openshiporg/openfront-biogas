@@ -31,7 +31,7 @@ export async function activateSubscription(uow: UnitOfWork, actor: Actor, subscr
   const started = sub.startedAt ? new Date(sub.startedAt) : from
   const monthsIn = Math.round((from.getTime() - started.getTime()) / (30.44 * 86_400_000))
   const bookYear = months === 12 || monthsIn % 12 === 0
-  const count = plan && bookYear ? plan.visitsPerYear : 0
+  const count = plan && bookYear ? plan.visitsPerYear ?? 0 : 0
   const yearEnd = addMonths(from, 12)
   for (let i = 0; i < count; i++) {
     const due = new Date(from.getTime() + ((yearEnd.getTime() - from.getTime()) * (i + 1)) / (count + 1))
