@@ -95,8 +95,15 @@ async function main() {
     // Booked to someone off the crew list: the dispatcher hands it to a technician free in that slot.
     const free: any[] = await one(dispatcher, 'staffVisitSlots', `query($f: String!) { staffVisitSlots(from: $f, days: 1) }`, { f: slot.date })
     techId = free.find((s: any) => s.slotIndex === slot.slotIndex)?.technicianIds.find((id: string) => crew.has(id)) ?? ''
-    if (!techId) throw new Error('No field technician is free for the survey slot.')
-    await dispatcher.gql(`mutation($v: ID!, $t: [ID!]!, $k: String!) { assignVisit(visitId: $v, technicianIds: $t, idempotencyKey: $k) }`, { v: visitRow.id, t: [techId], k: key('assign-survey') })
+    if (!techId) {
+      // The crew is full in that slot: the dispatcher moves the survey to the first slot a crew technician has free.
+      const later: any[] = await one(dispatcher, 'staffVisitSlots', `query($f: String!) { staffVisitSlots(from: $f, days: 14) }`, { f: slot.date })
+      const open = later.find((s: any) => s.technicianIds.some((id: string) => crew.has(id)))
+      if (!open) throw new Error('No field technician is free in the next 14 days.')
+      techId = open.technicianIds.find((id: string) => crew.has(id))
+      await one(dispatcher, 'scheduleVisit', `mutation($i: JSON!, $k: String!) { scheduleVisit(input: $i, idempotencyKey: $k) }`, { k: key('move-survey'), i: { visitId: visitRow.id, technicianIds: [techId], date: open.date, slotIndex: open.slotIndex, expectedVersion: visitRow.version } })
+      note('1c survey moved by the dispatcher', `to ${open.date} slot ${open.slotIndex}, a crew technician is free then`)
+    } else await dispatcher.gql(`mutation($v: ID!, $t: [ID!]!, $k: String!) { assignVisit(visitId: $v, technicianIds: $t, idempotencyKey: $k) }`, { v: visitRow.id, t: [techId], k: key('assign-survey') })
   }
   const tech = crew.get(techId)!
   await tech.gql(`mutation($v: ID!, $k: String!) { checkInVisit(visitId: $v, lat: "30.0852", lng: "-97.8403", idempotencyKey: $k) }`, { v: visitRow.id, k: key('checkin-survey') })
