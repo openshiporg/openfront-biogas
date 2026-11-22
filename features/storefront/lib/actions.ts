@@ -125,7 +125,7 @@ export async function submitOfflinePaymentAction(a: { code: string; provider: st
 }
 
 export async function payInstallmentAction(a: { planId: string; installmentIds?: string[]; payoff?: boolean; idempotencyKey: string }) {
-  return call<{ code?: string; publicCode?: string; sessionCode?: string }>('mutation($p: ID!, $i: [ID!], $o: Boolean, $k: String!) { payInstallment(planId: $p, installmentIds: $i, payoff: $o, idempotencyKey: $k) }', { p: a.planId, i: a.installmentIds ?? null, o: Boolean(a.payoff), k: a.idempotencyKey }, 'payInstallment')
+  return call<{ sessionCode: string; amount: number; currencyCode: string }>('mutation($p: ID!, $i: [ID!], $o: Boolean, $k: String!) { payInstallment(planId: $p, installmentIds: $i, payoff: $o, idempotencyKey: $k) }', { p: a.planId, i: a.installmentIds ?? null, o: Boolean(a.payoff), k: a.idempotencyKey }, 'payInstallment')
 }
 
 export async function subscribeToPlanAction(planId: string, systemId: string, idempotencyKey: string) {
