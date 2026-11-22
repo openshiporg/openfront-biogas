@@ -135,7 +135,7 @@ export async function OrderView({ o, tz, prepEditable, backHref }: { o: any; tz:
               <div>
                 <h3 className="text-lg font-bold">Get your site ready</h3>
                 <PrepList tasks={o.installation.prepTasks} editable={prepEditable} path={backHref ?? `/order/${o.code}`} />
-                {!prepEditable && (viewer
+                {!prepEditable && o.installation.prepTasks.some((t: any) => t.status !== 'done') && (viewer
                   ? <p className="sf-help mt-2">Tick these off from <Link href="/account/orders" className="underline">your orders</Link>.</p>
                   : <p className="sf-help mt-2"><Link href="/sign-in" className="underline">Sign in</Link> to tick these off.</p>)}
               </div>

@@ -7,6 +7,10 @@ import { money, word } from '../lib/format'
 import { Field, FormError, useKey } from './client'
 
 /* S22: pay one instalment, several, or the whole balance. Opens a pay link for that amount. */
+
+// Language codes as stored on the customer, with the names people know them by.
+const LANGUAGES: string[][] = [['en', 'English'], ['es', 'Spanish (Español)'], ['fr', 'French (Français)'], ['pt', 'Portuguese (Português)'], ['sw', 'Swahili (Kiswahili)'], ['hi', 'Hindi (हिन्दी)'], ['vi', 'Vietnamese (Tiếng Việt)'], ['zh', 'Chinese (中文)']]
+
 export function PayPlan({ planId, currencyCode, open, balance }: { planId: string; currencyCode: string; open: { id: string; label: string; left: number }[]; balance: number }) {
   const [picked, setPicked] = useState<string[]>(open[0] ? [open[0].id] : [])
   const [error, setError] = useState<string | null>(null)
@@ -114,7 +118,12 @@ export function ProfileForm({ p }: { p: { name: string; phone: string | null; al
         <Field label="Email" htmlFor="p-email" help="Call us to change the email you sign in with"><input id="p-email" value={p.email ?? ''} readOnly className="sf-input bg-[var(--cream-2)]" /></Field>
         <Field label="Phone" htmlFor="p-phone"><input id="p-phone" name="phone" type="tel" defaultValue={p.phone ?? ''} className="sf-input" autoComplete="tel" /></Field>
         <Field label="Other phone" htmlFor="p-alt"><input id="p-alt" name="altPhone" type="tel" defaultValue={p.altPhone ?? ''} className="sf-input" /></Field>
-        <Field label="Language" htmlFor="p-lang" help="For example en, sw, fr"><input id="p-lang" name="preferredLanguage" defaultValue={p.preferredLanguage ?? ''} className="sf-input" maxLength={10} /></Field>
+        <Field label="Language" htmlFor="p-lang" help="The language we speak and write to you in">
+          <select id="p-lang" name="preferredLanguage" defaultValue={p.preferredLanguage || 'en'} className="sf-input">
+            {/* Keep a code saved earlier that isn't in the list, so saving the form doesn't change it. */}
+            {[...LANGUAGES, ...(p.preferredLanguage && !LANGUAGES.some(l => l[0] === p.preferredLanguage) ? [[p.preferredLanguage, p.preferredLanguage]] : [])].map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+          </select>
+        </Field>
         <Field label="Best way to reach you" htmlFor="p-contact">
           <select id="p-contact" name="preferredContact" defaultValue={p.preferredContact ?? 'call'} className="sf-input"><option value="call">Phone call</option><option value="whatsapp">WhatsApp</option><option value="sms">Text message</option><option value="email">Email</option></select>
         </Field>

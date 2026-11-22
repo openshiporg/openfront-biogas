@@ -232,9 +232,9 @@ export async function AccountPaymentsScreen() {
             </div>
             <table className="w-full text-[0.95rem]">
               <caption className="sr-only">Schedule</caption>
-              <thead className="text-left text-[var(--muted)]"><tr><th className="py-2 font-semibold">Payment</th><th className="py-2 font-semibold">Due</th><th className="py-2 text-right font-semibold">Amount</th><th className="py-2 text-right font-semibold">Status</th></tr></thead>
+              <thead className="text-left text-[var(--muted)]"><tr><th className="py-2 font-semibold">Payment</th><th className="hidden py-2 font-semibold sm:table-cell">Due</th><th className="py-2 text-right font-semibold">Amount</th><th className="py-2 text-right font-semibold">Status</th></tr></thead>
               <tbody className="divide-y divide-[var(--line)]">{p.installments.map((i: any) => (
-                <tr key={i.id}><td className="py-2">{i.label}</td><td className="py-2">{i.dueDate ? date(i.dueDate, tz) : i.trigger ? statusText(i.trigger) : ''}</td><td className="py-2 text-right">{money(i.amount, p.currencyCode)}{i.paidAmount > 0 && i.paidAmount < i.amount ? <span className="block text-sm text-[var(--muted)]">{money(i.paidAmount, p.currencyCode)} paid</span> : null}</td><td className="py-2 text-right"><Status value={i.status} /></td></tr>
+                <tr key={i.id}><td className="py-2 pr-2">{i.label}<span className="block text-sm text-[var(--muted)] sm:hidden">{i.dueDate ? date(i.dueDate, tz) : i.trigger ? statusText(i.trigger) : ''}</span></td><td className="hidden py-2 sm:table-cell">{i.dueDate ? date(i.dueDate, tz) : i.trigger ? statusText(i.trigger) : ''}</td><td className="py-2 text-right">{money(i.amount, p.currencyCode)}{i.paidAmount > 0 && i.paidAmount < i.amount ? <span className="block text-sm text-[var(--muted)]">{money(i.paidAmount, p.currencyCode)} paid</span> : null}</td><td className="py-2 text-right"><Status value={i.status} /></td></tr>
               ))}</tbody>
             </table>
             {['active', 'in_arrears', 'defaulted', 'pending'].includes(p.status) && <PayPlan planId={p.id} currencyCode={p.currencyCode} open={open} balance={p.balanceAmount} />}
