@@ -37,6 +37,16 @@ export function PayPanel({ code, amount, currencyCode, methods, email }: { code:
   const usable = methods.filter(m => m.customerCanSubmit)
   const [pick, setPick] = useState(usable[0]?.code ?? '')
   const method = usable.find(m => m.code === pick)
+  // Set once a reference is sent: the method choice closes with the form, so a second reference can't follow.
+  const [sent, setSent] = useState<{ ref: string; label: string } | null>(null)
+  if (sent) {
+    return (
+      <div className="rounded-[14px] bg-[var(--sage)] p-4" role="status">
+        <p className="font-bold text-[var(--forest)]">We have your reference <span className="font-mono">{sent.ref}</span></p>
+        <p className="mt-1">We are checking the {money(amount, currencyCode)} {sent.label} payment and will confirm it, usually the same working day.</p>
+      </div>
+    )
+  }
   if (!usable.length) {
     return (
       <div className="sf-card p-5">
@@ -58,7 +68,7 @@ export function PayPanel({ code, amount, currencyCode, methods, email }: { code:
           ))}
         </div>
       </fieldset>
-      {method?.kind === 'card' ? <CardPay key={code} code={code} amount={amount} currencyCode={currencyCode} email={email} /> : method ? <ReferencePay key={method.code} code={code} method={method} amount={amount} currencyCode={currencyCode} /> : null}
+      {method?.kind === 'card' ? <CardPay key={code} code={code} amount={amount} currencyCode={currencyCode} email={email} /> : method ? <ReferencePay key={method.code} onSent={r => setSent({ ref: r, label: method.label })} code={code} method={method} amount={amount} currencyCode={currencyCode} /> : null}
       {methods.some(m => !m.customerCanSubmit && m.instructions) && (
         <p className="sf-help">{methods.filter(m => !m.customerCanSubmit && m.instructions).map(m => `${m.label}: ${m.instructions}`).join(' · ')}</p>
       )}
@@ -126,23 +136,13 @@ function CardPay({ code, amount, currencyCode, email }: { code: string; amount: 
   )
 }
 
-function ReferencePay({ code, method, amount, currencyCode }: { code: string; method: Method; amount: number; currencyCode: string }) {
+function ReferencePay({ code, method, amount, currencyCode, onSent }: { code: string; method: Method; amount: number; currencyCode: string; onSent: (ref: string) => void }) {
   const [key, renew] = useKey()
   const [ref, setRef] = useState('')
   const [phone, setPhone] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, start] = useTransition()
-  const [sent, setSent] = useState<string | null>(null)
   const router = useRouter()
-  // Once sent, the form gives way to the waiting status so nobody sends the same payment twice.
-  if (sent) {
-    return (
-      <div className="rounded-[14px] bg-[var(--sage)] p-4" role="status">
-        <p className="font-bold text-[var(--forest)]">We have your reference <span className="font-mono">{sent}</span></p>
-        <p className="mt-1">We are checking the {money(amount, currencyCode)} {method.label} payment and will confirm it, usually the same working day.</p>
-      </div>
-    )
-  }
   return (
     <form
       className="space-y-4"
@@ -154,7 +154,7 @@ function ReferencePay({ code, method, amount, currencyCode }: { code: string; me
           const r = await submitOfflinePaymentAction({ code, provider: method.code, reference: ref.trim(), payerPhone: phone.trim() || undefined, idempotencyKey: key })
           if (!r.ok) return setError(r.error)
           renew()
-          setSent(ref.trim())
+          onSent(ref.trim())
           router.push(`/pay/${code}`)
           router.refresh()
         })
