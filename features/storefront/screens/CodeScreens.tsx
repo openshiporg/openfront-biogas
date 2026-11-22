@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getOrder, getPaySession, getQuote, getVisit } from '../lib/data/codes'
 import { getStore } from '../lib/data/store'
+import { getViewer } from '../lib/data/session'
 import { date, money, statusText, word } from '../lib/format'
 import { Notice, PageHead, Rows, Section, Status } from '../components/ui'
 import { QuoteAccept } from '../components/QuoteAccept'
@@ -94,6 +95,7 @@ export async function PayScreen({ code }: { code: string }) {
 
 export async function OrderView({ o, tz, prepEditable, backHref }: { o: any; tz: string; prepEditable: boolean; backHref?: string }) {
   const m = (v: number) => money(v, o.currencyCode)
+  const viewer = prepEditable ? null : await getViewer()
   // A reference waiting for staff to check covers the amount it was sent for; don't ask for it twice.
   const waiting = o.payments.filter((p: any) => p.status === 'submitted').reduce((t: number, p: any) => t + p.amount, 0)
   const providers = await gqlOrNull<{ paymentProviders: { code: string; name: string }[] }>('{ paymentProviders { code name } }')
@@ -133,7 +135,9 @@ export async function OrderView({ o, tz, prepEditable, backHref }: { o: any; tz:
               <div>
                 <h3 className="text-lg font-bold">Get your site ready</h3>
                 <PrepList tasks={o.installation.prepTasks} editable={prepEditable} path={backHref ?? `/order/${o.code}`} />
-                {!prepEditable && <p className="sf-help mt-2"><Link href="/sign-in" className="underline">Sign in</Link> to tick these off.</p>}
+                {!prepEditable && (viewer
+                  ? <p className="sf-help mt-2">Tick these off from <Link href="/account/orders" className="underline">your orders</Link>.</p>
+                  : <p className="sf-help mt-2"><Link href="/sign-in" className="underline">Sign in</Link> to tick these off.</p>)}
               </div>
             )}
           </div>

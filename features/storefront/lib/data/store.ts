@@ -165,7 +165,9 @@ export const getSystem = cache(async (slug: string): Promise<SystemDetail | null
   return {
     ...toProduct(p),
     components: (p.kitComponents ?? []).filter((k: any) => k.component).map((k: any) => ({ quantity: k.quantity ?? 1, name: k.component.name, slug: k.component.isPublished ? k.component.slug : '', type: k.component.type })),
-    resources: (p.resources ?? []).map((x: any) => ({ id: x.id, title: x.title ?? '', kind: x.kind ?? 'manual', url: x.file?.url || x.url || null, language: x.language ?? '' })),
+    // Only an uploaded file or a full web address is a document a customer can open; a bare site path
+    // (e.g. /manuals/x with nothing behind it) would land on the not-found page.
+    resources: (p.resources ?? []).map((x: any) => ({ id: x.id, title: x.title ?? '', kind: x.kind ?? 'manual', url: x.file?.url || (/^https?:\/\//.test(x.url ?? '') ? x.url : null), language: x.language ?? '' })),
     fitsParts: (p.fitsParts ?? []).map(toProduct),
   }
 })

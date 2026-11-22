@@ -180,7 +180,7 @@ export async function SystemScreen({ slug }: { slug: string }) {
           </section>
         )}
 
-        {s.resources.length > 0 && (
+        {s.resources.some(r => r.url) && (
           <section className="mt-12" aria-labelledby="docs">
             <h2 id="docs" className="text-[1.6rem] font-extrabold">Manuals and guides</h2>
             <ul className="mt-4 space-y-2">
