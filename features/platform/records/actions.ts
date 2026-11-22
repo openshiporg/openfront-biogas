@@ -11,6 +11,17 @@ type Kind = 'text' | 'int' | 'money' | 'bool' | 'decimal' | 'json' | 'date' | 'r
  * write and how a form value turns into a GraphQL value; Keystone's list access rules still decide who may write.
  */
 const LISTS: Record<string, { create: string; update: string; input: string; fields: Record<string, Kind> }> = {
+  Product: { create: 'createProduct', update: 'updateProduct', input: 'Product', fields: {
+    name: 'text', slug: 'text', sku: 'text', type: 'text', description: 'text', imageUrl: 'text', priceAmount: 'money', compareAtAmount: 'money', taxable: 'bool',
+    isPublished: 'bool', isSerialized: 'bool', sellOnline: 'bool', requiresInstallation: 'bool', requiresSurvey: 'bool', installFeeAmount: 'money',
+    weightKg: 'decimal', warrantyMonths: 'int', unitCostAmount: 'money', category: 'relation', compatibleWith: 'relations',
+  } },
+  DigesterSpec: { create: 'createDigesterSpec', update: 'updateDigesterSpec', input: 'DigesterSpec', fields: {
+    product: 'relation', capacityM3: 'decimal', technology: 'text', feedstockTypes: 'json', minDailyFeedKg: 'decimal', maxDailyFeedKg: 'decimal', dailyGasM3: 'decimal',
+    cookingHoursPerDay: 'decimal', servesPeople: 'int', footprintLengthM: 'decimal', footprintWidthM: 'decimal', waterPerDayL: 'decimal',
+    reactorWarrantyMonths: 'int', partsWarrantyMonths: 'int', installHours: 'decimal', surveyKind: 'text', isPublished: 'bool',
+  } },
+  KitComponent: { create: 'createKitComponent', update: 'updateKitComponent', input: 'KitComponent', fields: { kit: 'relation', component: 'relation', quantity: 'int', isPublished: 'bool' } },
   Supplier: { create: 'createSupplier', update: 'updateSupplier', input: 'Supplier', fields: { name: 'text', contact: 'text', phone: 'text', email: 'text', country: 'text', leadTimeDays: 'int' } },
 };
 
@@ -28,6 +39,29 @@ function value(kind: Kind, raw: unknown): unknown {
     case 'relation': return s ? { connect: { id: String(s) } } : undefined;
     case 'relations': return { set: (Array.isArray(s) ? s : String(s ?? '').split(',')).map(x => String(x).trim()).filter(Boolean).map(id => ({ id })) };
   }
+}
+
+/** Remove one plain record the list allows deleting (a kit line). */
+const DELETABLE: Record<string, string> = { KitComponent: 'deleteKitComponent' };
+export async function deleteRecord(list: string, id: string, paths: string[] = []) {
+  const op = DELETABLE[list];
+  if (!op) return { ok: false as const, error: 'This record is not removed here.' };
+  const res = await keystoneClient(`mutation Del($id: ID!) { ${op}(where: { id: $id }) { id } }`, { id });
+  if (!res.success) return { ok: false as const, error: res.error || 'Could not remove.' };
+  for (const p of paths) revalidatePath(p);
+  return { ok: true as const };
+}
+
+/** Upload a product photo (Product.image). */
+export async function uploadProductImage(form: FormData) {
+  const id = String(form.get('productId') ?? '');
+  const file = form.get('file');
+  if (!id || !(file instanceof File) || !file.size) return { ok: false as const, error: 'Choose a photo.' };
+  if (file.size > 10 * 1024 * 1024) return { ok: false as const, error: 'The photo is over 10 MB.' };
+  const res = await keystoneClient(`mutation Img($id: ID!, $data: ProductUpdateInput!) { updateProduct(where: { id: $id }, data: $data) { id } }`, { id, data: { image: { upload: file } } });
+  if (!res.success) return { ok: false as const, error: res.error || 'Could not upload.' };
+  revalidatePath('/dashboard/platform/catalogue');
+  return { ok: true as const };
 }
 
 export async function saveRecord(list: string, id: string | null, data: Record<string, unknown>, paths: string[] = []) {

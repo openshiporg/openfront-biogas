@@ -8,7 +8,7 @@ import { inputClass, type FormField } from '../components/CommandForm';
 import { toMinor } from '../lib/format';
 import { saveRecord } from './actions';
 
-export type RecordField = FormField | { name: string; label: string; kind: 'checkbox'; defaultValue?: boolean } | { name: string; label: string; kind: 'textarea'; defaultValue?: string; required?: boolean; placeholder?: string };
+export type RecordField = FormField | { name: string; label: string; kind: 'checkbox'; defaultValue?: boolean } | { name: string; label: string; kind: 'multi'; options: { value: string; label: string }[]; defaultValue?: string[] } | { name: string; label: string; kind: 'textarea'; defaultValue?: string; required?: boolean; placeholder?: string };
 
 const WIDTH = { sm: 'sm:w-36', md: 'sm:w-56', lg: 'sm:w-80' };
 
@@ -30,6 +30,7 @@ export function RecordForm({ list, id = null, fields, fixed = {}, submit, paths,
         const data: Record<string, unknown> = { ...fixed };
         for (const f of fields) {
           if (f.kind === 'checkbox') { data[f.name] = form.get(f.name) === 'on'; continue; }
+          if (f.kind === 'multi') { data[f.name] = form.getAll(f.name).map(String); continue; }
           const raw = String(form.get(f.name) ?? '').trim();
           if (f.kind === 'money') {
             if (!raw) { data[f.name] = ''; continue; }
@@ -51,6 +52,14 @@ export function RecordForm({ list, id = null, fields, fixed = {}, submit, paths,
         if (f.kind === 'hidden') return <input key={f.name} type="hidden" name={f.name} defaultValue={f.defaultValue} />;
         if (f.kind === 'checkbox') return (
           <label key={f.name} className="flex h-9 items-center gap-2 text-sm"><input type="checkbox" name={f.name} defaultChecked={f.defaultValue} className="size-4" />{f.label}</label>
+        );
+        if (f.kind === 'multi') return (
+          <fieldset key={f.name} className="flex w-full flex-col gap-1 text-xs text-muted-foreground">
+            <legend className="mb-1">{f.label}</legend>
+            <span className="flex flex-wrap gap-x-4 gap-y-1">
+              {f.options.map((o) => <label key={o.value} className="flex items-center gap-2 text-sm text-foreground"><input type="checkbox" name={f.name} value={o.value} defaultChecked={f.defaultValue?.includes(o.value)} className="size-4" />{o.label}</label>)}
+            </span>
+          </fieldset>
         );
         if (f.kind === 'textarea') return (
           <label key={f.name} className="flex w-full flex-col gap-1 text-xs text-muted-foreground">
