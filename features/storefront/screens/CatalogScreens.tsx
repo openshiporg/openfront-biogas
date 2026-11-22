@@ -6,14 +6,33 @@ import { Arrow, Check } from '../components/Art'
 import { Empty, PageHead, Section } from '../components/ui'
 import { AddToCart } from '../components/AddToCart'
 
-/** Our photographs stand in only when the company has not uploaded one for the item. */
-export function systemImage(p: Product) {
-  if (p.imageUrl) return p.imageUrl
-  const t = p.spec?.technology ?? ''
-  if (t === 'container') return '/storefront/system-container.jpg'
-  if (t === 'prefab_bag') return '/storefront/system-bag.jpg'
-  if (t === 'fixed_dome' || t === 'floating_drum') return Number(p.spec?.capacityM3 ?? 0) >= 15 ? '/storefront/system-farm.jpg' : '/storefront/system-home.jpg'
-  return Number(p.spec?.capacityM3 ?? 0) >= 6 ? '/storefront/system-farm.jpg' : '/storefront/system-home.jpg'
+/**
+ * Our photographs stand in only when the company has not uploaded one for the item. Each system gets
+ * its own picture (by technology and size, then spread by its place in the list) so two cards side by
+ * side never show the same photo.
+ */
+const BY_TECH: Record<string, string[]> = {
+  prefab_bag: ['/storefront/system-bag.jpg', '/storefront/system-bag-2.jpg'],
+  prefab_tube: ['/storefront/system-tube.jpg', '/storefront/system-farm.jpg'],
+  prefab_tank: ['/storefront/system-farm.jpg', '/storefront/system-tube.jpg'],
+  fixed_dome: ['/storefront/system-home.jpg', '/storefront/system-farm.jpg'],
+  floating_drum: ['/storefront/system-home.jpg', '/storefront/system-farm.jpg'],
+  container: ['/storefront/system-container.jpg'],
+}
+export function systemImages(list: Product[]) {
+  const used = new Set<string>()
+  const out = new Map<string, string>()
+  for (const p of list) {
+    if (p.imageUrl) { out.set(p.id, p.imageUrl); continue }
+    const pool = BY_TECH[p.spec?.technology ?? ''] ?? ['/storefront/system-home.jpg', '/storefront/system-farm.jpg']
+    const pick = pool.find(x => !used.has(x)) ?? pool[0]
+    used.add(pick)
+    out.set(p.id, pick)
+  }
+  return out
+}
+export function systemImage(p: Product, all?: Product[]) {
+  return systemImages(all ?? [p]).get(p.id) ?? '/storefront/system-home.jpg'
 }
 const partImage = (p: Product) => p.imageUrl || (p.type === 'appliance' ? '/storefront/parts.jpg' : null)
 
@@ -24,6 +43,7 @@ const specLine = (p: Product) =>
 
 export async function SystemsScreen() {
   const [systems, templates] = await Promise.all([getSystems(), getPlanTemplates()])
+  const pics = systemImages(systems)
   return (
     <>
       <PageHead title="Biogas systems" intro="Every system is sized at a site survey, installed by our team and comes with training and a written warranty. Compare them side by side." />
@@ -35,14 +55,15 @@ export async function SystemsScreen() {
             <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {systems.map(s => {
                 const m = fromMonthly(s.priceAmount, templates)
+                const img = pics.get(s.id)
                 return (
                   <li key={s.id}>
                     <Link href={`/systems/${s.slug}`} className="sf-card group block h-full overflow-hidden transition hover:-translate-y-0.5 hover:shadow-lg">
-                      <img src={systemImage(s)} alt="" className="aspect-[3/2] w-full object-cover" />
+                      <img src={img} alt="" className="aspect-[16/10] w-full object-cover" />
                       <div className="p-5">
                         <h2 className="text-xl font-bold group-hover:text-[var(--clay)]">{s.name}</h2>
                         <p className="mt-1 text-[0.95rem] text-[var(--muted)]">{specLine(s)}</p>
-                        <p className="mt-3 font-bold text-[var(--forest)]">{money(s.priceAmount, s.currencyCode, { whole: true })}{m ? <span className="font-normal text-[var(--muted)]"> · or {money(m, s.currencyCode, { whole: true })} a month</span> : null}</p>
+                        <p className="mt-3 font-bold text-[var(--forest)]">{money(s.priceAmount, s.currencyCode, { whole: true })}{m ? <span className="font-normal text-[var(--muted)]"> · or {money(m, s.currencyCode)} a month</span> : null}</p>
                       </div>
                     </Link>
                   </li>
@@ -95,6 +116,7 @@ export async function SystemScreen({ slug }: { slug: string }) {
   if (!s) notFound()
   const m = fromMonthly(s.priceAmount, templates)
   const sp = s.spec
+  const img = systemImages(await getSystems()).get(s.id) ?? systemImage(s)
   const rows: [string, string][] = sp
     ? ([
         ['Type', word(sp.technology)],
@@ -115,7 +137,7 @@ export async function SystemScreen({ slug }: { slug: string }) {
       <Section>
         <div className="grid gap-10 lg:grid-cols-[1.1fr_1fr]">
           <div>
-            <img src={systemImage(s)} alt="" className="aspect-[3/2] w-full rounded-[20px] object-cover" />
+            <img src={img} alt="" className="aspect-[3/2] w-full rounded-[20px] object-cover" />
             {s.description && <div className="sf-prose mt-6">{s.description.split(/\n{2,}/).map((p, i) => <p key={i}>{p}</p>)}</div>}
           </div>
           <div className="space-y-6">

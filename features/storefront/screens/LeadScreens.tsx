@@ -21,7 +21,7 @@ export async function GetAQuoteScreen({ q }: { q: { interest?: string; system?: 
   const [store, viewer] = await Promise.all([getStore(), getViewer()])
   return (
     <>
-      <PageHead title="Get a free quote" intro={<>Four short steps. We reply with a written quote, with options and payment plans.{store.phone ? <> Prefer to talk? Call <a href={telHref(store.phone)} className="font-bold text-[var(--clay)] underline">{store.phone}</a>.</> : null}</>} />
+      <PageHead title="Get a quote" intro={<>Four short steps. We reply with a written quote, with options and payment plans.{store.phone ? <> Prefer to talk? Call <a href={telHref(store.phone)} className="font-bold text-[var(--clay)] underline">{store.phone}</a>.</> : null}</>} />
       <Section className="max-w-[900px]">
         <QuoteRequest
           country={store.country}

@@ -3,7 +3,7 @@ import { getFaqs, getPlanTemplates, getStore, getStories, getSystems, fromMonthl
 import { money, num } from '../lib/format'
 import { Arrow, Check, IconBin, IconFlame, IconHands, IconLeaf, IconLeafSmall, IconMedal, IconPeople, IconSprout } from '../components/Art'
 import { Faqs } from '../components/Faqs'
-import { systemImage } from './CatalogScreens'
+import { systemImages } from './CatalogScreens'
 
 const STEPS = [
   { art: '/storefront/step-1.jpg', title: 'Survey your site', body: 'We visit, look at your animals, kitchen waste and space, and size the right system for you.' },
@@ -24,30 +24,33 @@ export async function HomeScreen() {
   const lowest = systems.length ? systems.reduce((a, b) => (a.priceAmount <= b.priceAmount ? a : b)) : null
   const monthly = lowest ? fromMonthly(lowest.priceAmount, templates) : null
   const name = store.name || 'We'
+  const pics = systemImages(systems.slice(0, 3))
 
   return (
     <>
-      {/* Hero */}
+      {/* Hero: on a phone the photo sits on top and the words below it on forest green, so no face is ever under text. */}
       <section className="relative isolate overflow-hidden bg-[var(--forest)]">
-        <img src="/storefront/hero.jpg" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover object-[70%_50%]" />
-        <div className="absolute inset-0 -z-10 bg-[#0d240f]/65 sm:bg-transparent sm:bg-gradient-to-r sm:from-[#0d240f]/85 sm:via-[#0d240f]/45 sm:to-transparent" />
-        <div className="mx-auto flex min-h-[440px] max-w-[1240px] flex-col justify-center px-4 py-10 sm:px-6 lg:min-h-[500px]">
-          <div className="max-w-[36rem] text-white">
-            <h1 className="text-[2.4rem] font-extrabold leading-[1.02] !text-white sm:text-[3.2rem] lg:text-[3.6rem]">Turn your waste into clean cooking gas</h1>
-            <p className="mt-5 text-lg leading-snug text-[#eef0e4] sm:text-xl">{store.heroText || `A complete biogas system for your home, farm or kitchen, from ${name === 'We' ? 'a team' : name} that stays with you after the install.`}</p>
-            <ul className="mt-6 space-y-2 text-lg">
+        <img src="/storefront/hero.jpg" alt="" className="h-[220px] w-full object-cover object-[78%_40%] sm:absolute sm:inset-y-0 sm:right-0 sm:-z-10 sm:h-full sm:w-[72%] sm:object-[100%_45%] lg:w-[70%]" />
+        <div className="absolute inset-0 -z-10 hidden bg-gradient-to-r from-[#0f2a12] from-[30%] via-[#0f2a12]/80 via-[40%] to-transparent to-[52%] sm:block" />
+        <div className="mx-auto flex max-w-[1240px] flex-col justify-center px-4 pb-9 pt-6 sm:min-h-[460px] sm:px-6 sm:py-10 lg:min-h-[500px]">
+          <div className="text-white sm:max-w-[46%] lg:max-w-[40%]">
+            <h1 className="text-[2.1rem] font-extrabold leading-[1.04] !text-white sm:text-[2.8rem] lg:text-[3.3rem]">Turn your waste into clean cooking gas</h1>
+            <p className="mt-4 text-[1.05rem] leading-snug text-[#eef0e4] sm:text-lg">{store.heroText || `A complete biogas system for your home, farm or kitchen, from ${name === 'We' ? 'a team' : name} that stays with you after the install.`}</p>
+            <ul className="mt-5 space-y-1.5 text-[1.05rem] sm:text-lg">
               {['We survey your site', 'We install your digester', 'We teach you to run it', 'We service it for years'].map(t => (
                 <li key={t} className="flex items-center gap-3"><Check className="h-6 w-6 shrink-0" />{t}</li>
               ))}
             </ul>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="mt-7 flex flex-wrap items-center gap-3">
               <Link href="/get-a-quote" className="sf-btn !min-h-[52px] !px-7 text-lg">Get a quote <Arrow /></Link>
-              {store.configured && store.surveyFeeAmount === 0 && <span className="text-[0.95rem] font-semibold text-white">Free site survey</span>}
+              {store.configured && store.surveyFeeAmount === 0 && (
+                <span className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/40 bg-white/10 px-3.5 text-[0.95rem] font-semibold text-white"><Check className="h-5 w-5 shrink-0" />Free site survey</span>
+              )}
             </div>
             {lowest && !store.heroText && (
               <p className="mt-5 text-[0.95rem] text-[#dfe6cc]">
                 Systems from <strong className="text-white">{money(lowest.priceAmount, lowest.currencyCode, { whole: true })}</strong>
-                {monthly ? <> or <strong className="text-white">{money(monthly, lowest.currencyCode, { whole: true })} a month</strong></> : null}
+                {monthly ? <> or <strong className="text-white">{money(monthly, lowest.currencyCode)} a month</strong></> : null}
               </p>
             )}
           </div>
@@ -87,11 +90,11 @@ export async function HomeScreen() {
               return (
                 <li key={s.id}>
                   <Link href={`/systems/${s.slug}`} className="sf-card group block h-full overflow-hidden transition hover:-translate-y-0.5 hover:shadow-lg">
-                    <img src={systemImage(s)} alt="" className="aspect-[3/2] w-full object-cover" />
+                    <img src={pics.get(s.id)} alt="" className="aspect-[16/10] w-full object-cover" />
                     <div className="p-5">
                       <h3 className="text-xl font-bold group-hover:text-[var(--clay)]">{s.name}</h3>
                       {s.spec && <p className="mt-1 text-[0.95rem] text-[var(--muted)]">{[s.spec.capacityM3 && `${num(s.spec.capacityM3)} m³`, s.spec.dailyGasM3 && `${num(s.spec.dailyGasM3, 2)} m³ gas a day`, s.spec.servesPeople && `cooks for ${s.spec.servesPeople}`].filter(Boolean).join(' · ')}</p>}
-                      <p className="mt-3 font-bold text-[var(--forest)]">{money(s.priceAmount, s.currencyCode, { whole: true })}{m ? <span className="font-normal text-[var(--muted)]"> · or {money(m, s.currencyCode, { whole: true })} a month</span> : null}</p>
+                      <p className="mt-3 font-bold text-[var(--forest)]">{money(s.priceAmount, s.currencyCode, { whole: true })}{m ? <span className="font-normal text-[var(--muted)]"> · or {money(m, s.currencyCode)} a month</span> : null}</p>
                     </div>
                   </Link>
                 </li>
