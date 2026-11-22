@@ -2,6 +2,7 @@ import { createAuth } from '@keystone-6/auth'
 import { config } from '@keystone-6/core'
 import type { StorageConfig } from '@keystone-6/core/types'
 import 'dotenv/config'
+import { mkdirSync } from 'node:fs'
 import { models } from './models'
 import { statelessSessions } from '@keystone-6/core/session'
 import { extendGraphqlSchema } from './mutations'
@@ -29,6 +30,8 @@ function storage(kind: 'image' | 'file', folder: string): StorageConfig {
       ...(S3_ENDPOINT ? { endpoint: S3_ENDPOINT, forcePathStyle: true } : {}), pathPrefix: `${folder}/`, signed: { expiry: 3600 },
     } as StorageConfig
   }
+  // Keystone writes into this folder but never creates it; without it every upload fails with ENOENT.
+  mkdirSync(`public/${folder}`, { recursive: true })
   return { kind: 'local', type: kind, generateUrl: path => `/${folder}${path}`, serverRoute: { path: `/${folder}` }, storagePath: `public/${folder}` } as StorageConfig
 }
 
