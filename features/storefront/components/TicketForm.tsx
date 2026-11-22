@@ -41,7 +41,7 @@ export function TicketForm({ systems, signedIn, phone, initialCode }: { systems:
         e.preventDefault()
         const fd = new FormData(e.currentTarget)
         const g = (k: string) => String(fd.get(k) ?? '').trim()
-        const input: Record<string, unknown> = { category, description: g('description'), callbackPhone: g('callbackPhone'), severity: ['smell', 'leak'].includes(category) ? 'high' : undefined }
+        const input: Record<string, unknown> = { category, description: g('description'), callbackPhone: g('callbackPhone'), severity: ['smell', 'leak'].includes(category) ? 'urgent' : undefined }
         if (signedIn && systems.length) input.systemId = g('systemId')
         else input.systemCode = g('systemCode')
         if (!input.description) return setError('Tell us what is happening.')

@@ -28,7 +28,7 @@ export async function HomeScreen() {
     <>
       {/* Hero */}
       <section className="relative isolate overflow-hidden bg-[var(--forest)]">
-        <img src="/storefront/hero.png" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover object-[70%_50%]" />
+        <img src="/storefront/hero.jpg" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover object-[70%_50%]" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#0d240f]/90 via-[#0d240f]/60 to-transparent" />
         <div className="mx-auto flex min-h-[480px] max-w-[1240px] flex-col justify-center px-4 py-14 sm:px-6 lg:min-h-[540px]">
           <div className="max-w-[36rem] text-white">
@@ -103,7 +103,7 @@ export async function HomeScreen() {
               return (
                 <li key={s.id}>
                   <Link href={`/systems/${s.slug}`} className="sf-card group block h-full overflow-hidden transition hover:-translate-y-0.5 hover:shadow-lg">
-                    <img src={s.imageUrl || (s.spec?.feedstockTypes.includes('kitchen') && !s.spec?.feedstockTypes.includes('manure') ? '/storefront/system-home.png' : Number(s.spec?.capacityM3 ?? 0) >= 8 ? '/storefront/system-farm.png' : '/storefront/system-home.png')} alt="" className="aspect-[3/2] w-full object-cover" />
+                    <img src={s.imageUrl || (s.spec?.feedstockTypes.includes('kitchen') && !s.spec?.feedstockTypes.includes('manure') ? '/storefront/system-home.jpg' : Number(s.spec?.capacityM3 ?? 0) >= 8 ? '/storefront/system-farm.jpg' : '/storefront/system-home.jpg')} alt="" className="aspect-[3/2] w-full object-cover" />
                     <div className="p-5">
                       <h3 className="text-xl font-bold group-hover:text-[var(--clay)]">{s.name}</h3>
                       {s.spec && <p className="mt-1 text-[0.95rem] text-[var(--muted)]">{[s.spec.capacityM3 && `${num(s.spec.capacityM3)} m³`, s.spec.dailyGasM3 && `${num(s.spec.dailyGasM3, 2)} m³ gas a day`, s.spec.servesPeople && `cooks for ${s.spec.servesPeople}`].filter(Boolean).join(' · ')}</p>}
@@ -119,7 +119,7 @@ export async function HomeScreen() {
 
       {/* About */}
       <section className="mx-auto grid max-w-[1240px] gap-8 px-4 pt-14 sm:px-6 lg:grid-cols-[1.1fr_1fr_0.9fr] lg:items-center" aria-labelledby="about">
-        <img src="/storefront/team.png" alt="" className="aspect-[16/10] w-full rounded-[20px] object-cover" />
+        <img src="/storefront/team.jpg" alt="" className="aspect-[16/10] w-full rounded-[20px] object-cover" />
         <div>
           <h2 id="about" className="text-[1.8rem] font-extrabold leading-tight">A local team that stays with you</h2>
           <div className="sf-prose mt-3">
