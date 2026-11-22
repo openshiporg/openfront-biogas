@@ -19,7 +19,7 @@ export async function recordWebhookEvents(tx: Tx, intents: WebhookIntent[], now:
     for (const endpoint of subscribed) {
       const payload = { event: intent.eventType, timestamp: now.toISOString(), listKey: intent.resourceType, id: intent.resourceId, data: intent.data }
       const row = await tx.webhookEvent.create({
-        data: { eventType: intent.eventType, resourceType: intent.resourceType, resourceId: intent.resourceId, payload, endpointId: endpoint.id, delivered: false, deliveryAttempts: 0 },
+        data: { eventType: intent.eventType, resourceType: intent.resourceType, resourceId: intent.resourceId, payload: payload as never, endpointId: endpoint.id, delivered: false, deliveryAttempts: 0 },
         select: { id: true },
       })
       ids.push(row.id)
@@ -34,7 +34,7 @@ export async function deliverWebhookEvent(db: Db, eventId: string) {
   const event = await db.webhookEvent.findUnique({ where: { id: eventId }, include: { endpoint: true } })
   if (!event?.endpoint || event.delivered) return
   const body = JSON.stringify(event.payload)
-  const attempts = event.deliveryAttempts + 1
+  const attempts = (event.deliveryAttempts ?? 0) + 1
   try {
     if (!event.endpoint.secret) throw new Error('Webhook endpoint secret is required')
     const response = await fetch(event.endpoint.url, {

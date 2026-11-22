@@ -1,5 +1,5 @@
-import { list } from '@keystone-6/core'
-import { checkbox, image, integer, json, relationship, text, timestamp } from '@keystone-6/core/fields'
+import { graphql, list } from '@keystone-6/core'
+import { checkbox, image, integer, json, relationship, text, timestamp, virtual } from '@keystone-6/core/fields'
 import { document } from '@keystone-6/fields-document'
 import { anyOf, has } from '../access'
 import { choice, currency, governed, managed, money, published, qty, ro, serverKey, serverText, status, version } from './fields'
@@ -52,6 +52,20 @@ export const Product = list({
     compatibleWith: relationship({ ref: 'Product.fitsParts', many: true, ui: { description: 'Kits this part fits' } }),
     fitsParts: relationship({ ref: 'Product.compatibleWith', many: true, ui: { description: 'Parts that fit this kit' } }),
     stockLevels: relationship({ ref: 'StockLevel.product', many: true, ...ro }),
+    /** Units that can be sold now (on hand less reserved, warehouses and branches; a kit counts its bill of materials). */
+    availableQuantity: virtual({
+      field: graphql.field({
+        type: graphql.Int,
+        resolve: async (item, _a, context) => {
+          const { stockUnits, availableQuantity } = await import('../services/stock')
+          const tx = context.prisma as never
+          const units = await stockUnits(tx, String((item as { id: string }).id), 1)
+          if (!units.length) return null
+          const each = await Promise.all(units.map(async u => Math.floor((await availableQuantity(tx, u.productId)) / u.quantity)))
+          return Math.min(...each)
+        },
+      }),
+    }),
     media: relationship({ ref: 'Media.product', many: true }),
     resources: relationship({ ref: 'Resource.products', many: true }),
     guides: relationship({ ref: 'TroubleshootingGuide.appliesTo', many: true }),

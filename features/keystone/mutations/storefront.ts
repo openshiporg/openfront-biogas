@@ -17,6 +17,7 @@ import { getSettings } from '../services/settings'
 import { sessionEffectiveStatus } from '../lib/time'
 import { str } from '../services/util'
 import * as stripe from '../../integrations/payment/stripe'
+import { registerCustomer } from '../services/accounts'
 
 const graphql = String.raw
 
@@ -53,7 +54,7 @@ export const storefrontTypeDefs = graphql`
     acceptQuote(code: String!, optionId: ID!, planOfferId: ID, signedName: String!, idempotencyKey: String!): JSON
     declineQuote(code: String!, reason: String, idempotencyKey: String!): JSON
     addToCart(productId: ID!, quantity: Int!): JSON
-    updateCartLine(lineId: ID!, quantity: Int!): JSON
+    updateCartLineQuantity(lineId: ID!, quantity: Int!): JSON
     removeCartLine(lineId: ID!): JSON
     setCartFulfilment(input: JSON!): JSON
     completeCart(idempotencyKey: String!): JSON
@@ -68,6 +69,7 @@ export const storefrontTypeDefs = graphql`
     payInstallment(planId: ID!, installmentIds: [ID!], payoff: Boolean, idempotencyKey: String!): JSON
     subscribeToPlan(planId: ID!, systemId: ID!, idempotencyKey: String!): JSON
     updateMyProfile(input: JSON!): JSON
+    registerCustomer(input: JSON!): JSON
   }
 `
 
@@ -233,7 +235,7 @@ export const storefrontResolvers = {
       await addToCart(c.prisma, cart.id, a.productId, a.quantity)
       return { ...(await priceCart(c.prisma, cart.id)), cartToken: cart.token }
     }),
-    updateCartLine: op(async (_r, a: { lineId: string; quantity: number }, c) => {
+    updateCartLineQuantity: op(async (_r, a: { lineId: string; quantity: number }, c) => {
       const cart = await cartByToken(c.prisma, cartToken(c))
       if (!cart) throw new DomainError(Codes.NOT_FOUND, 'Your cart is empty.')
       await updateCartLine(c.prisma, cart.id, a.lineId, a.quantity)
@@ -346,6 +348,13 @@ export const storefrontResolvers = {
       const me = customerId(c)
       const actor = anyone(c, 'me')
       return run(c, 'subscribeToPlan', actor, a, uow => subscribeToPlan(uow, actor, { planId: a.planId, systemId: a.systemId, customerId: me }))
+    }),
+    registerCustomer: op(async (_r, a: { input: any }, c) => {
+      const { idempotencyKey, password, ...rest } = a.input ?? {}
+      const actor = guest(c, 'register')
+      // The password is never part of the receipt fingerprint or stored result.
+      const { keyHash: hashOf } = await import('../lib/idempotency')
+      return run(c, 'registerCustomer', actor, { idempotencyKey, ...rest, passwordHash: hashOf(`pw:${String(password ?? '')}`) }, uow => registerCustomer(uow, actor, { ...rest, password }))
     }),
     updateMyProfile: op(async (_r, a: { input: any }, c) => {
       const me = customerId(c)

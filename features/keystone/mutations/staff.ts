@@ -30,7 +30,7 @@ export const staffTypeDefs = graphql`
     staffCart(cartId: ID!): JSON
   }
   type Mutation {
-    createLead(input: JSON!, idempotencyKey: String!): JSON
+    addLead(input: JSON!, idempotencyKey: String!): JSON
     transitionLead(leadId: ID!, to: String!, reason: String, expectedVersion: Int, idempotencyKey: String!): JSON
     assignLead(leadId: ID!, userId: ID!, expectedVersion: Int, idempotencyKey: String!): JSON
     staffSizeSystem(leadId: ID, input: JSON!): JSON
@@ -134,7 +134,7 @@ export const staffResolvers = {
     }),
   },
   Mutation: {
-    createLead: cmd('createLead', async (uow, actor, a: K & { input: any }) => {
+    addLead: cmd('addLead', async (uow, actor, a: K & { input: any }) => {
       requirePermission(actor, 'canManageLeads')
       const source = str(a.input?.source, 20) || 'phone'
       const input = leads.parseLeadInput(a.input, source)

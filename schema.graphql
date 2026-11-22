@@ -1733,6 +1733,7 @@ type Product {
   fitsPartsCount(where: ProductWhereInput! = {}): Int
   stockLevels(where: StockLevelWhereInput! = {}, orderBy: [StockLevelOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: StockLevelWhereUniqueInput): [StockLevel!]
   stockLevelsCount(where: StockLevelWhereInput! = {}): Int
+  availableQuantity: Int
   media(where: MediaWhereInput! = {}, orderBy: [MediaOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: MediaWhereUniqueInput): [Media!]
   mediaCount(where: MediaWhereInput! = {}): Int
   resources(where: ResourceWhereInput! = {}, orderBy: [ResourceOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: ResourceWhereUniqueInput): [Resource!]
@@ -9537,6 +9538,93 @@ type Mutation {
   createInitialUser(data: CreateInitialUserInput!): UserAuthenticationWithPasswordSuccess!
   sendUserPasswordResetLink(email: String!): Boolean!
   redeemUserPasswordResetToken(email: String!, token: String!, password: String!): RedeemUserPasswordResetTokenResult
+  sizeSystem(input: JSON!): JSON
+  submitQuoteRequest(input: JSON!, idempotencyKey: String!): JSON
+  bookSurveyVisit(leadCode: String!, date: String!, slotIndex: Int!, idempotencyKey: String!): JSON
+  acceptQuote(code: String!, optionId: ID!, planOfferId: ID, signedName: String!, idempotencyKey: String!): JSON
+  declineQuote(code: String!, reason: String, idempotencyKey: String!): JSON
+  addToCart(productId: ID!, quantity: Int!): JSON
+  updateCartLineQuantity(lineId: ID!, quantity: Int!): JSON
+  removeCartLine(lineId: ID!): JSON
+  setCartFulfilment(input: JSON!): JSON
+  completeCart(idempotencyKey: String!): JSON
+  initiatePaymentSession(code: String!, provider: String!, email: String): JSON
+  completePaymentSession(code: String!): JSON
+  submitOfflinePayment(code: String!, provider: String!, reference: String!, payerPhone: String, idempotencyKey: String!): JSON
+  rescheduleVisitByCode(code: String!, date: String!, slotIndex: Int!, idempotencyKey: String!): JSON
+  cancelVisitByCode(code: String!, reason: String, idempotencyKey: String!): JSON
+  createTicket(input: JSON!, idempotencyKey: String!): JSON
+  completeSitePrepTask(taskId: ID!, done: Boolean!, note: String, idempotencyKey: String!): JSON
+  acceptServiceQuote(code: String!, optionId: ID!, signedName: String!, idempotencyKey: String!): JSON
+  payInstallment(planId: ID!, installmentIds: [ID!], payoff: Boolean, idempotencyKey: String!): JSON
+  subscribeToPlan(planId: ID!, systemId: ID!, idempotencyKey: String!): JSON
+  updateMyProfile(input: JSON!): JSON
+  registerCustomer(input: JSON!): JSON
+  addLead(input: JSON!, idempotencyKey: String!): JSON
+  transitionLead(leadId: ID!, to: String!, reason: String, expectedVersion: Int, idempotencyKey: String!): JSON
+  assignLead(leadId: ID!, userId: ID!, expectedVersion: Int, idempotencyKey: String!): JSON
+  staffSizeSystem(leadId: ID, input: JSON!): JSON
+  logContact(input: JSON!, idempotencyKey: String!): JSON
+  saveQuoteDraft(input: JSON!, idempotencyKey: String!): JSON
+  sendQuote(quoteId: ID!, expectedVersion: Int, idempotencyKey: String!): JSON
+  approveQuote(quoteId: ID!, expectedVersion: Int, idempotencyKey: String!): JSON
+  reviseQuote(quoteId: ID!, idempotencyKey: String!): JSON
+  cancelQuote(quoteId: ID!, reason: String, expectedVersion: Int, idempotencyKey: String!): JSON
+  staffAcceptQuote(quoteId: ID!, optionId: ID!, planOfferId: ID, signedName: String!, idempotencyKey: String!): JSON
+  scheduleVisit(input: JSON!, idempotencyKey: String!): JSON
+  assignVisit(visitId: ID!, technicianIds: [ID!]!, expectedVersion: Int, idempotencyKey: String!): JSON
+  cancelVisit(visitId: ID!, reason: String!, expectedVersion: Int, idempotencyKey: String!): JSON
+  startVisitTravel(visitId: ID!, expectedVersion: Int, idempotencyKey: String!): JSON
+  checkInVisit(visitId: ID!, lat: String, lng: String, expectedVersion: Int, idempotencyKey: String!): JSON
+  saveVisitChecklist(visitId: ID!, answers: JSON!, idempotencyKey: String!): JSON
+  logPartUsage(visitId: ID!, productId: ID!, quantity: Int!, locationId: ID, chargeable: Boolean, idempotencyKey: String!): JSON
+  completeVisit(input: JSON!, idempotencyKey: String!): JSON
+  addTechnicianTimeOff(technicianId: ID!, date: String!, reason: String, idempotencyKey: String!): JSON
+  removeTechnicianTimeOff(id: ID!, idempotencyKey: String!): JSON
+  transitionInstallation(installationId: ID!, action: String!, reason: String, expectedVersion: Int, idempotencyKey: String!): JSON
+  setSitePrepTask(taskId: ID!, status: String!, note: String, idempotencyKey: String!): JSON
+  commissionSystem(input: JSON!, idempotencyKey: String!): JSON
+  submitReading(input: JSON!, idempotencyKey: String!): JSON
+  setSystemStatus(systemId: ID!, to: String!, reason: String!, expectedVersion: Int, idempotencyKey: String!): JSON
+  voidWarranty(warrantyId: ID!, reason: String!, idempotencyKey: String!): JSON
+  staffCreateTicket(input: JSON!, idempotencyKey: String!): JSON
+  transitionTicket(input: JSON!, idempotencyKey: String!): JSON
+  addTicketNote(ticketId: ID!, body: String!, isCustomerVisible: Boolean, idempotencyKey: String!): JSON
+  createPayLink(input: JSON!, idempotencyKey: String!): JSON
+  recordOfflinePayment(sessionCode: String!, provider: String!, reference: String!, payerPhone: String, idempotencyKey: String!): JSON
+  verifyOfflinePayment(paymentId: ID!, expectedVersion: Int, idempotencyKey: String!): JSON
+  rejectOfflinePayment(paymentId: ID!, reason: String!, expectedVersion: Int, idempotencyKey: String!): JSON
+  reconcilePaymentSession(sessionId: ID!): JSON
+  reconcileRefund(refundId: ID!): JSON
+  refundPayment(paymentId: ID!, amount: Int!, reason: String!, payoutReference: String, idempotencyKey: String!): JSON
+  applyStoreCredit(orderId: ID!, amount: Int!, idempotencyKey: String!): JSON
+  cancelOrder(input: JSON!, idempotencyKey: String!): JSON
+  fulfilOrder(input: JSON!, idempotencyKey: String!): JSON
+  proposeOrderChange(input: JSON!, idempotencyKey: String!): JSON
+  decideOrderChange(changeId: ID!, approve: Boolean!, reason: String, expectedVersion: Int, idempotencyKey: String!): JSON
+  returnOrderLines(input: JSON!, idempotencyKey: String!): JSON
+  issueInvoice(orderId: ID!, installmentId: ID, dueDays: Int, idempotencyKey: String!): JSON
+  voidInvoice(invoiceId: ID!, reason: String!, expectedVersion: Int, idempotencyKey: String!): JSON
+  staffStartCart(customerId: ID): JSON
+  staffAddToCart(cartId: ID!, productId: ID!, quantity: Int!): JSON
+  staffSetCartFulfilment(cartId: ID!, input: JSON!): JSON
+  staffCompleteCart(cartId: ID!, idempotencyKey: String!): JSON
+  waiveInstallment(installmentId: ID!, reason: String!, expectedVersion: Int, idempotencyKey: String!): JSON
+  reschedulePlan(planId: ID!, shiftDays: Int, shiftMonths: Int, reason: String!, expectedVersion: Int, idempotencyKey: String!): JSON
+  staffInstallmentLink(planId: ID!, installmentIds: [ID!], payoff: Boolean, idempotencyKey: String!): JSON
+  staffSubscribeToPlan(planId: ID!, systemId: ID!, idempotencyKey: String!): JSON
+  renewSubscription(subscriptionId: ID!, idempotencyKey: String!): JSON
+  cancelSubscription(subscriptionId: ID!, reason: String!, visitListPriceAmount: Int, payoutReference: String, expectedVersion: Int, idempotencyKey: String!): JSON
+  savePurchaseOrder(input: JSON!, idempotencyKey: String!): JSON
+  transitionPurchaseOrder(purchaseOrderId: ID!, action: String!, reason: String, expectedVersion: Int, idempotencyKey: String!): JSON
+  receivePurchaseOrder(purchaseOrderId: ID!, lines: JSON!, locationId: ID, expectedVersion: Int, idempotencyKey: String!): JSON
+  adjustStock(productId: ID!, locationId: ID!, delta: Int, countedQuantity: Int, reason: String!, idempotencyKey: String!): JSON
+  transferStock(productId: ID!, fromLocationId: ID!, toLocationId: ID!, quantity: Int!, reason: String, idempotencyKey: String!): JSON
+  moveSerial(serialNumber: String!, locationId: ID, status: String, reason: String, idempotencyKey: String!): JSON
+  openIncentiveApplication(programId: ID!, customerId: ID!, orderId: ID, amount: Int, notes: String, idempotencyKey: String!): JSON
+  transitionIncentiveApplication(applicationId: ID!, action: String!, reference: String, reason: String, rejectionHandling: String, expectedVersion: Int, idempotencyKey: String!): JSON
+  approveCommission(commissionId: ID!, action: String, reason: String, expectedVersion: Int, idempotencyKey: String!): JSON
+  grantReferralReward(referralId: ID!, action: String, rewardKind: String, reason: String, expectedVersion: Int, idempotencyKey: String!): JSON
 }
 
 union UserAuthenticationWithPasswordResult = UserAuthenticationWithPasswordSuccess | UserAuthenticationWithPasswordFailure
@@ -9794,6 +9882,27 @@ type Query {
   authenticatedItem: AuthenticatedItem
   validateUserPasswordResetToken(email: String!, token: String!): ValidateUserPasswordResetTokenResult
   redirectToInit: Boolean
+  storefrontInfo: JSON
+  availableVisitSlots(from: String, days: Int, postcode: String, region: String, country: String): JSON
+  checkServiceArea(postcode: String, region: String, country: String): JSON
+  getQuoteByCode(code: String!): JSON
+  getOrderByCode(code: String!): JSON
+  getVisitByCode(code: String!): JSON
+  getSystemByCode(code: String!): JSON
+  getPaymentSession(code: String!): JSON
+  activeCart: JSON
+  myOverview: JSON
+  myOrders: JSON
+  myOrder(id: ID!): JSON
+  myPayments: JSON
+  mySystems: JSON
+  mySystem(id: ID!): JSON
+  myTickets: JSON
+  myTicket(id: ID!): JSON
+  myProfile: JSON
+  staffVisitSlots(from: String!, days: Int, branchId: ID, technicianId: ID): JSON
+  cancellationPreview(orderId: ID!, byCompany: Boolean, kitReturned: Boolean): JSON
+  staffCart(cartId: ID!): JSON
 }
 
 union AuthenticatedItem = User
