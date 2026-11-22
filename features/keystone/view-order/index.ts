@@ -11,16 +11,16 @@
 export const VIEW_ORDER = [
   "text",
   "password",
+  "checkbox",
+  "select",
   "relationship",
   "timestamp",
-  "checkbox",
-  "document",
-  "select",
-  "integer",
-  "multiselect",
-  "float",
   "decimal",
-  "bigInt",
+  "image",
+  "integer",
   "json",
-  "image"
+  "@keystone-6/core/fields/types/file/views",
+  "virtual",
+  "@keystone-6/core/fields/types/calendarDay/views",
+  "document"
 ];
