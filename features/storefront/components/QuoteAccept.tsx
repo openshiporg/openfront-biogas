@@ -7,6 +7,9 @@ import { money, word } from '../lib/format'
 import { Check } from './Art'
 import { FormError, useKey } from './client'
 
+// An offer with no instalments is the same as paying in full, which is always offered; don't list it twice.
+const plans = (o: { planOffers: Offer[] }) => o.planOffers.filter(p => p.instalmentCount > 0)
+
 type Offer = { id: string; label: string; depositAmount: number; instalmentAmount: number; instalmentCount: number; frequency: string; planFeeAmount: number; totalAmount: number }
 type Option = { id: string; label: string; description: string; isRecommended: boolean; subtotalAmount: number; discountAmount: number; taxAmount: number; totalAmount: number; lines: { id: string; kind: string; description: string; quantity: number; unitAmount: number; totalAmount: number; warrantyMonths: number }[]; planOffers: Offer[] }
 
@@ -59,9 +62,9 @@ export function QuoteAccept({ code, currencyCode, options, canAccept, service, t
                 {o.taxAmount > 0 && <div className="flex justify-between"><dt>Tax</dt><dd>{m(o.taxAmount)}</dd></div>}
                 <div className="flex justify-between text-lg font-bold text-[var(--forest)]"><dt>Total</dt><dd>{m(o.totalAmount)}</dd></div>
               </dl>
-              {o.planOffers.length > 0 && (
+              {plans(o).length > 0 && (
                 <ul className="mt-3 space-y-1 text-[0.95rem] text-[var(--muted)]">
-                  {o.planOffers.map(p => <li key={p.id}>{p.label}: {m(p.depositAmount)} now, then {p.instalmentCount} × {m(p.instalmentAmount)} {word(p.frequency)}</li>)}
+                  {plans(o).map(p => <li key={p.id}>{p.label}: {m(p.depositAmount)} now, then {p.instalmentCount} × {m(p.instalmentAmount)} {word(p.frequency)}</li>)}
                 </ul>
               )}
             </label>
@@ -72,14 +75,14 @@ export function QuoteAccept({ code, currencyCode, options, canAccept, service, t
       {canAccept && option && (
         <div className="sf-card space-y-5 p-6">
           <h2 className="text-2xl font-extrabold">Accept {options.length > 1 ? `“${option.label}”` : 'this quote'}</h2>
-          {!service && option.planOffers.length > 0 && (
+          {!service && plans(option).length > 0 && (
             <fieldset className="space-y-2">
               <legend className="sf-label">How would you like to pay?</legend>
               <label className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-[14px] border px-4 ${!offerId ? 'border-[var(--clay)] bg-[var(--clay-soft)]' : 'border-[var(--line)] bg-white'}`}>
                 <input type="radio" name="offer" className="h-5 w-5 accent-[var(--clay)]" checked={!offerId} onChange={() => setOfferId('')} />
                 <span><strong>Pay in full</strong>: {m(option.totalAmount)}</span>
               </label>
-              {option.planOffers.map(p => (
+              {plans(option).map(p => (
                 <label key={p.id} className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-[14px] border px-4 py-2 ${offerId === p.id ? 'border-[var(--clay)] bg-[var(--clay-soft)]' : 'border-[var(--line)] bg-white'}`}>
                   <input type="radio" name="offer" className="h-5 w-5 accent-[var(--clay)]" checked={offerId === p.id} onChange={() => setOfferId(p.id)} />
                   <span><strong>{p.label}</strong>: {m(p.depositAmount)} deposit, then {p.instalmentCount} payments of {m(p.instalmentAmount)} {word(p.frequency)}{p.planFeeAmount > 0 ? ` (plan fee ${m(p.planFeeAmount)}, ${m(p.totalAmount)} in all)` : ''}</span>
