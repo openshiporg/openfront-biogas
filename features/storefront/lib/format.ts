@@ -65,7 +65,7 @@ const STATUS: Record<string, string> = {
   pending_payment: 'Waiting for payment', awaiting_deposit: 'Waiting for deposit', confirmed: 'Confirmed', preparing: 'Being prepared', ready: 'Ready',
   shipped: 'On its way', out_for_install: 'Out for installation', delivered: 'Delivered', installed: 'Installed', completed: 'Completed', closed: 'Closed',
   // payments
-  pending: 'Waiting', authorized: 'Card approved', captured: 'Paid', failed: 'Did not go through', submitted: 'Waiting for us to confirm your payment',
+  pending: 'Waiting', authorized: 'Card approved', captured: 'Paid', failed: 'Did not go through', submitted: 'Waiting for us to confirm your payment', awaiting_verification: 'Waiting for us to confirm your payment',
   verified: 'Confirmed', rejected: 'Not accepted', partially_refunded: 'Partly refunded', refunded: 'Refunded', unknown: 'Being checked',
   // plan and instalment
   active: 'Active', in_arrears: 'Behind on payments', defaulted: 'Overdue', settled_early: 'Paid off early', scheduled: 'Scheduled', due: 'Due now',

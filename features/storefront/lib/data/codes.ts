@@ -1,11 +1,16 @@
 import 'server-only'
-import { gql, gqlOrNull } from './client'
+import { gql } from './client'
 
 /* Records a guest reaches by their unguessable code (S6, S14, S15, S16). */
 
+// null means "no such code" (the page shows not-found); a server failure throws, so the page shows the error state instead.
 const one = async <T,>(op: string, code: string) => {
-  const r = await gqlOrNull<Record<string, T | null>>(`query($code: String!) { ${op}(code: $code) }`, { code })
-  return r?.[op] ?? null
+  const r = await gql<Record<string, T | null>>(`query($code: String!) { ${op}(code: $code) }`, { code })
+  if (!r.ok) {
+    if (r.code === 'NOT_FOUND') return null
+    throw new Error(r.error)
+  }
+  return r.data[op] ?? null
 }
 
 export const getQuote = (code: string) => one<any>('getQuoteByCode', code)

@@ -70,3 +70,21 @@ export function Rows({ rows }: { rows: [string, React.ReactNode][] }) {
     </dl>
   )
 }
+
+/* Shown while a page reads its data: the page's shape in soft blocks, no spinner wall. */
+export function LoadingState() {
+  return (
+    <div aria-busy="true" aria-live="polite">
+      <span className="sr-only">Loading…</span>
+      <div className="border-b border-[var(--line)] bg-[var(--cream-2)]">
+        <div className="mx-auto max-w-[1240px] animate-pulse px-4 pb-8 pt-8 sm:px-6">
+          <div className="h-10 w-2/3 max-w-md rounded-full bg-[var(--sage)]" />
+          <div className="mt-4 h-5 w-full max-w-xl rounded-full bg-[var(--sage)]" />
+        </div>
+      </div>
+      <div className="mx-auto grid max-w-[1240px] animate-pulse gap-5 px-4 py-10 sm:grid-cols-2 sm:px-6 lg:grid-cols-3">
+        {[0, 1, 2].map(i => <div key={i} className="h-56 rounded-[20px] bg-[var(--sage)]" />)}
+      </div>
+    </div>
+  )
+}

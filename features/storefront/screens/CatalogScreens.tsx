@@ -9,7 +9,11 @@ import { AddToCart } from '../components/AddToCart'
 /** Our photographs stand in only when the company has not uploaded one for the item. */
 export function systemImage(p: Product) {
   if (p.imageUrl) return p.imageUrl
-  return Number(p.spec?.capacityM3 ?? 0) >= 8 || p.spec?.feedstockTypes.some(f => f === 'cattle' || f === 'pig') ? '/storefront/system-farm.jpg' : '/storefront/system-home.jpg'
+  const t = p.spec?.technology ?? ''
+  if (t === 'container') return '/storefront/system-container.jpg'
+  if (t === 'prefab_bag') return '/storefront/system-bag.jpg'
+  if (t === 'fixed_dome' || t === 'floating_drum') return Number(p.spec?.capacityM3 ?? 0) >= 15 ? '/storefront/system-farm.jpg' : '/storefront/system-home.jpg'
+  return Number(p.spec?.capacityM3 ?? 0) >= 6 ? '/storefront/system-farm.jpg' : '/storefront/system-home.jpg'
 }
 const partImage = (p: Product) => p.imageUrl || (p.type === 'appliance' ? '/storefront/parts.jpg' : null)
 

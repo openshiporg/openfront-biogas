@@ -1,14 +1,15 @@
 import Link from 'next/link'
 import { getFaqs, getPlanTemplates, getStore, getStories, getSystems, fromMonthly } from '../lib/data/store'
 import { money, num } from '../lib/format'
-import { Arrow, Check, IconBin, IconFlame, IconHands, IconLeaf, IconLeafSmall, IconMedal, IconPeople, IconSprout, StepInstall, StepService, StepSurvey, StepTeach } from '../components/Art'
+import { Arrow, Check, IconBin, IconFlame, IconHands, IconLeaf, IconLeafSmall, IconMedal, IconPeople, IconSprout } from '../components/Art'
 import { Faqs } from '../components/Faqs'
+import { systemImage } from './CatalogScreens'
 
 const STEPS = [
-  { art: StepSurvey, title: 'Survey your site', body: 'We visit, look at your animals, kitchen waste and space, and size the right system for you.' },
-  { art: StepInstall, title: 'Install the digester', body: 'Our own team builds and connects it, then lights the first flame with you.' },
-  { art: StepTeach, title: 'Teach you to run it', body: 'Hands-on training for the family: feeding, the gas valve, the slurry and what to watch for.' },
-  { art: StepService, title: 'Keep it running', body: 'Check-ups, parts and repairs from people who know your system, for as long as you own it.' },
+  { art: '/storefront/step-1.jpg', title: 'Survey your site', body: 'We visit, look at your animals, kitchen waste and space, and size the right system for you.' },
+  { art: '/storefront/step-2.jpg', title: 'Install the digester', body: 'Our own team builds and connects it, then lights the first flame with you.' },
+  { art: '/storefront/step-3.jpg', title: 'Teach you to run it', body: 'Hands-on training for the family: feeding, the gas valve, the slurry and what to watch for.' },
+  { art: '/storefront/step-4.jpg', title: 'Keep it running', body: 'Check-ups, parts and repairs from people who know your system, for as long as you own it.' },
 ]
 
 const BENEFITS = [
@@ -29,8 +30,8 @@ export async function HomeScreen() {
       {/* Hero */}
       <section className="relative isolate overflow-hidden bg-[var(--forest)]">
         <img src="/storefront/hero.jpg" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover object-[70%_50%]" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#0d240f]/90 via-[#0d240f]/60 to-transparent" />
-        <div className="mx-auto flex min-h-[480px] max-w-[1240px] flex-col justify-center px-4 py-14 sm:px-6 lg:min-h-[540px]">
+        <div className="absolute inset-0 -z-10 bg-[#0d240f]/65 sm:bg-transparent sm:bg-gradient-to-r sm:from-[#0d240f]/85 sm:via-[#0d240f]/45 sm:to-transparent" />
+        <div className="mx-auto flex min-h-[440px] max-w-[1240px] flex-col justify-center px-4 py-10 sm:px-6 lg:min-h-[500px]">
           <div className="max-w-[36rem] text-white">
             <h1 className="text-[2.4rem] font-extrabold leading-[1.02] !text-white sm:text-[3.2rem] lg:text-[3.6rem]">Turn your waste into clean cooking gas</h1>
             <p className="mt-5 text-lg leading-snug text-[#eef0e4] sm:text-xl">{store.heroText || `A complete biogas system for your home, farm or kitchen, from ${name === 'We' ? 'a team' : name} that stays with you after the install.`}</p>
@@ -43,7 +44,7 @@ export async function HomeScreen() {
               <Link href="/get-a-quote" className="sf-btn !min-h-[52px] !px-7 text-lg">Get a quote <Arrow /></Link>
               {store.configured && store.surveyFeeAmount === 0 && <span className="text-[0.95rem] font-semibold text-white">Free site survey</span>}
             </div>
-            {lowest && (
+            {lowest && !store.heroText && (
               <p className="mt-5 text-[0.95rem] text-[#dfe6cc]">
                 Systems from <strong className="text-white">{money(lowest.priceAmount, lowest.currencyCode, { whole: true })}</strong>
                 {monthly ? <> or <strong className="text-white">{money(monthly, lowest.currencyCode, { whole: true })} a month</strong></> : null}
@@ -55,14 +56,19 @@ export async function HomeScreen() {
 
       {/* How it works */}
       <section className="mx-auto max-w-[1240px] px-4 pb-10 pt-12 sm:px-6" aria-labelledby="how">
-        <h2 id="how" className="sf-rule text-center text-[1.7rem] font-extrabold sm:text-[2rem]"><span>A complete, worry-free biogas system</span></h2>
-        <ol className="mt-10 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+        <h2 id="how" className="sf-rule text-center text-[1.7rem] font-extrabold sm:text-[2rem]"><span>A complete, worry-free biogas solution</span></h2>
+        <ol className="mt-8 grid gap-6 sm:mt-10 sm:grid-cols-2 sm:gap-10 lg:grid-cols-4 lg:gap-6">
           {STEPS.map((s, i) => (
-            <li key={s.title} className="relative">
-              <div className="mx-auto flex h-[132px] w-full max-w-[220px] items-center justify-center overflow-hidden rounded-[48%_52%_46%_54%/58%_56%_44%_42%] bg-[var(--sage)]"><s.art /></div>
+            <li key={s.title} className="relative grid grid-cols-[120px_1fr] items-center gap-4 sm:block">
+              <div className="relative mx-auto h-[96px] w-full max-w-[230px] sm:h-[150px]">
+                <div className="absolute inset-x-0 bottom-0 top-5 rounded-[48%_52%_46%_54%/58%_56%_44%_42%] bg-[var(--sage)]" aria-hidden="true" />
+                <img src={s.art} alt="" className="relative mx-auto h-full w-auto object-contain mix-blend-multiply [mask-image:radial-gradient(ellipse_at_center,#000_58%,transparent_74%)]" />
+              </div>
               {i < STEPS.length - 1 && <Arrow className="absolute -right-5 top-14 hidden h-6 w-6 text-[var(--forest)] lg:block" />}
-              <h3 className="mt-5 text-xl font-bold">{i + 1}. {s.title}</h3>
-              <p className="mt-2 leading-snug">{s.body}</p>
+              <div>
+                <h3 className="text-lg font-bold sm:mt-5 sm:text-xl">{i + 1}. {s.title}</h3>
+                <p className="mt-1 leading-snug sm:mt-2">{s.body}</p>
+              </div>
             </li>
           ))}
         </ol>
@@ -81,7 +87,7 @@ export async function HomeScreen() {
               return (
                 <li key={s.id}>
                   <Link href={`/systems/${s.slug}`} className="sf-card group block h-full overflow-hidden transition hover:-translate-y-0.5 hover:shadow-lg">
-                    <img src={s.imageUrl || (s.spec?.feedstockTypes.includes('kitchen') && !s.spec?.feedstockTypes.includes('manure') ? '/storefront/system-home.jpg' : Number(s.spec?.capacityM3 ?? 0) >= 8 ? '/storefront/system-farm.jpg' : '/storefront/system-home.jpg')} alt="" className="aspect-[3/2] w-full object-cover" />
+                    <img src={systemImage(s)} alt="" className="aspect-[3/2] w-full object-cover" />
                     <div className="p-5">
                       <h3 className="text-xl font-bold group-hover:text-[var(--clay)]">{s.name}</h3>
                       {s.spec && <p className="mt-1 text-[0.95rem] text-[var(--muted)]">{[s.spec.capacityM3 && `${num(s.spec.capacityM3)} m³`, s.spec.dailyGasM3 && `${num(s.spec.dailyGasM3, 2)} m³ gas a day`, s.spec.servesPeople && `cooks for ${s.spec.servesPeople}`].filter(Boolean).join(' · ')}</p>}
@@ -106,11 +112,11 @@ export async function HomeScreen() {
           </ul>
         </div>
         {store.impactNumbers.length > 0 && (
-          <dl className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+          <dl className={`mt-6 grid gap-3 sm:gap-4 ${['', 'grid-cols-1', 'grid-cols-2', 'grid-cols-3', 'grid-cols-2 md:grid-cols-4'][store.impactNumbers.length]}`}>
             {store.impactNumbers.map(n => (
-              <div key={n.label} className="sf-card px-5 py-4 text-center">
-                <dt className="text-sm text-[var(--muted)]">{n.label}</dt>
-                <dd className="font-[family-name:var(--font-sf-head)] text-3xl font-extrabold text-[var(--clay)]">{n.value}</dd>
+              <div key={n.label} className="sf-card flex flex-col-reverse justify-end px-2 py-4 text-center sm:px-5">
+                <dt className="text-[0.8rem] leading-tight text-[var(--muted)] sm:text-sm">{n.label}</dt>
+                <dd className="font-[family-name:var(--font-sf-head)] text-2xl font-extrabold text-[var(--clay)] sm:text-3xl">{n.value}</dd>
               </div>
             ))}
           </dl>
@@ -164,7 +170,7 @@ export async function HomeScreen() {
       )}
 
       {/* Closing band */}
-      <section className="relative mt-14 overflow-hidden bg-[var(--band)] px-4 py-12 text-center text-white sm:px-6">
+      <section className="relative mt-14 overflow-hidden bg-[var(--band)] px-4 py-10 text-center text-white sm:px-6">
         <div className="pointer-events-none absolute -left-10 -top-10 h-48 w-48 rounded-full bg-[#c96a3f]/50 blur-2xl" aria-hidden="true" />
         <div className="pointer-events-none absolute -bottom-12 right-0 h-56 w-56 rounded-full bg-[#8e3a17]/50 blur-2xl" aria-hidden="true" />
         <h2 className="relative text-[1.8rem] font-extrabold !text-white sm:text-[2.2rem]">Ready to cook with your own gas?</h2>
