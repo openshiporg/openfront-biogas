@@ -41,7 +41,10 @@ async function requestContext() {
     },
     socket: { remoteAddress: '' },
   }
-  return keystoneContext.withRequest(req as never)
+  // Keystone's session start writes Set-Cookie on a response; give it one so in-process sign-in returns a
+  // token (the storefront action then sets the cookie itself).
+  const res = { setHeader() {}, getHeader() { return undefined }, headersSent: false }
+  return keystoneContext.withRequest(req as never, res as never)
 }
 
 /** Run one GraphQL document as the current visitor. */
