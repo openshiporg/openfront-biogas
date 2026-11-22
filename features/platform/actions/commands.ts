@@ -87,6 +87,7 @@ const READS: Record<string, Record<string, string>> = {
   staffVisitSlots: { from: 'String!', days: 'Int', branchId: 'ID', technicianId: 'ID' },
   cancellationPreview: { orderId: 'ID!', byCompany: 'Boolean', kitReturned: 'Boolean' },
   staffCart: { cartId: 'ID!' },
+  checkServiceArea: { postcode: 'String', region: 'String', country: 'String' },
 };
 
 function pick(spec: Record<string, string>, variables: Record<string, unknown>) {
