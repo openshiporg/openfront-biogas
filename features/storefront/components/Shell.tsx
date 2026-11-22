@@ -59,7 +59,7 @@ export async function Header() {
 }
 
 export async function Footer() {
-  const store = await getStore()
+  const [store, viewer] = await Promise.all([getStore(), getViewer()])
   const year = new Date().getFullYear()
   return (
     <footer className="bg-[var(--footer)] text-[#e9eddb]">
@@ -69,7 +69,7 @@ export async function Footer() {
           {store.about && <p className="max-w-sm text-sm italic leading-relaxed text-[#cfd8bf]">{store.about.split(/(?<=\.)\s/)[0]}</p>}
         </div>
         <nav aria-label="Footer" className="grid grid-cols-2 gap-x-6 gap-y-1 text-[0.95rem]">
-          {[...NAV, { href: '/get-a-quote', label: 'Get a quote' }, { href: '/sign-in', label: 'Sign in' }, { href: '/account', label: 'Your account' }].map(l => (
+          {[...NAV, { href: '/get-a-quote', label: 'Get a quote' }, ...(viewer ? [] : [{ href: '/sign-in', label: 'Sign in' }]), { href: viewer?.isStaff ? '/dashboard' : '/account', label: 'Your account' }].map(l => (
             <Link key={l.href} href={l.href} className="flex min-h-11 items-center hover:text-white hover:underline">{l.label}</Link>
           ))}
         </nav>

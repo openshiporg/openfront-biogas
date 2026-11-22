@@ -10,6 +10,17 @@ import { FormError, useKey } from './client'
 // An offer with no instalments is the same as paying in full, which is always offered; don't list it twice.
 const plans = (o: { planOffers: Offer[] }) => o.planOffers.filter(p => p.instalmentCount > 0)
 
+/** The instalments after the deposit, worded so the amounts add up exactly to the offer's total.
+ *  The plan splits evenly and puts the odd cents one each on the last payments, so say which ones. */
+function instalments(p: Offer, m: (v: number) => string) {
+  const n = p.instalmentCount
+  const base = Math.floor((p.totalAmount - p.depositAmount) / n)
+  const odd = p.totalAmount - p.depositAmount - base * n
+  const every = word(p.frequency)
+  if (!odd) return `${n} payment${n > 1 ? 's' : ''} of ${m(base)} ${every}`
+  return `${n} payments ${every}: ${n - odd} of ${m(base)} and ${odd === 1 ? 'the last' : `the last ${odd}`} of ${m(base + 1)}`
+}
+
 type Offer = { id: string; label: string; depositAmount: number; instalmentAmount: number; instalmentCount: number; frequency: string; planFeeAmount: number; totalAmount: number }
 type Option = { id: string; label: string; description: string; isRecommended: boolean; subtotalAmount: number; discountAmount: number; taxAmount: number; totalAmount: number; lines: { id: string; kind: string; description: string; quantity: number; unitAmount: number; totalAmount: number; warrantyMonths: number }[]; planOffers: Offer[] }
 
@@ -64,7 +75,7 @@ export function QuoteAccept({ code, currencyCode, options, canAccept, service, t
               </dl>
               {plans(o).length > 0 && (
                 <ul className="mt-3 space-y-1 text-[0.95rem] text-[var(--muted)]">
-                  {plans(o).map(p => <li key={p.id}>{p.label}: {m(p.depositAmount)} now, then {p.instalmentCount} × {m(p.instalmentAmount)} {word(p.frequency)}</li>)}
+                  {plans(o).map(p => <li key={p.id}>{p.label}: {m(p.depositAmount)} now, then {instalments(p, m)}</li>)}
                 </ul>
               )}
             </label>
@@ -85,7 +96,7 @@ export function QuoteAccept({ code, currencyCode, options, canAccept, service, t
               {plans(option).map(p => (
                 <label key={p.id} className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-[14px] border px-4 py-2 ${offerId === p.id ? 'border-[var(--clay)] bg-[var(--clay-soft)]' : 'border-[var(--line)] bg-white'}`}>
                   <input type="radio" name="offer" className="h-5 w-5 accent-[var(--clay)]" checked={offerId === p.id} onChange={() => setOfferId(p.id)} />
-                  <span><strong>{p.label}</strong>: {m(p.depositAmount)} deposit, then {p.instalmentCount} payments of {m(p.instalmentAmount)} {word(p.frequency)}{p.planFeeAmount > 0 ? ` (plan fee ${m(p.planFeeAmount)}, ${m(p.totalAmount)} in all)` : ''}</span>
+                  <span><strong>{p.label}</strong>: {m(p.depositAmount)} deposit, then {instalments(p, m)}{p.planFeeAmount > 0 ? ` (plan fee ${m(p.planFeeAmount)}, ${m(p.totalAmount)} in all)` : ''}</span>
                 </label>
               ))}
             </fieldset>
