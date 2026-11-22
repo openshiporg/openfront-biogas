@@ -12,10 +12,12 @@ import { getSettings } from './settings'
 export async function technicians(tx: Tx, branchId?: string | null) {
   const users = await tx.user.findMany({
     where: { isActive: true, role: { canDoFieldWork: true }, ...(branchId ? { OR: [{ branchId }, { branchId: null }] } : {}) },
-    select: { id: true, name: true, branchId: true },
+    select: { id: true, name: true, branchId: true, role: { select: { canManageSettings: true, canManageVisits: true } } },
     orderBy: { name: 'asc' },
   })
-  return users
+  // Bookings made without a chosen technician take the first free one: crews before managers and the owner.
+  const rank = (u: (typeof users)[number]) => (u.role?.canManageSettings ? 2 : u.role?.canManageVisits ? 1 : 0)
+  return users.sort((a, b) => rank(a) - rank(b)).map(({ role: _role, ...u }) => u)
 }
 
 export async function openSlots(tx: Tx, input: { from: string; days: number; branchId?: string | null; technicianId?: string | null }) {

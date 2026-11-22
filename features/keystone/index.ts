@@ -8,6 +8,7 @@ import { extendGraphqlSchema } from './mutations'
 import { sendPasswordResetEmail } from './lib/mail'
 import { withMcpBearerSessions } from './mcp-oauth/session'
 import { permissionNames } from './access'
+import { throwKeystonePrismaErrors } from './lib/keystonePrismaErrors'
 
 const databaseURL = process.env.DATABASE_URL || 'postgres://localhost:5432/openfront_biogas'
 
@@ -67,7 +68,7 @@ const { withAuth } = createAuth({
 
 export default withAuth(
   config({
-    db: { provider: 'postgresql', url: databaseURL },
+    db: { provider: 'postgresql', url: databaseURL, extendPrismaClient: throwKeystonePrismaErrors },
     lists: models,
     storage: {
       biogas_images: storage('image', 'images'),

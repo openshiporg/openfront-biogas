@@ -55,12 +55,16 @@ async function main() {
   const dispatcher = new Client('dispatcher')
   const finance = new Client('finance')
   const care = new Client('customer care')
-  const tech = new Client('technician')
   const salesId = await sales.signIn(`grace.alvarez@${DOMAIN}`, PASSWORD)
   await dispatcher.signIn(`tom.brooks@${DOMAIN}`, PASSWORD)
   await finance.signIn(`ben.carter@${DOMAIN}`, PASSWORD)
   await care.signIn(`david.whitfield@${DOMAIN}`, PASSWORD)
-  const techId = await tech.signIn(`hannah.lindqvist@${DOMAIN}`, PASSWORD)
+  // Every field technician signs in; each visit is worked by whoever is on its crew.
+  const crew = new Map<string, Client>()
+  for (const name of ['hannah.lindqvist', 'linda.okafor', 'marcus.kowalski']) {
+    const t = new Client(`technician ${name}`)
+    crew.set(await t.signIn(`${name}@${DOMAIN}`, PASSWORD), t)
+  }
   const info: any = await one(visitor, 'storefrontInfo', `{ storefrontInfo }`)
   const card = Boolean(info.cardPayments) && Boolean(process.env.STRIPE_SECRET_KEY)
   const stamp = Date.now().toString(36).slice(-5)
@@ -82,7 +86,15 @@ async function main() {
   // 2. Staff: complete the survey, send a quote with two options and an instalment plan.
   const leadRow: any = (await sales.gql(`query($n: String!) { leads(where: { number: { equals: $n } }) { id version customer { id } } }`, { n: asked.leadNumber })).leads[0]
   const visitRow: any = (await dispatcher.gql(`query($c: String!) { visits(where: { publicCode: { equals: $c } }) { id version technicians { id } } }`, { c: asked.survey.visitCode })).visits[0]
-  await dispatcher.gql(`mutation($v: ID!, $t: [ID!]!, $k: String!) { assignVisit(visitId: $v, technicianIds: $t, idempotencyKey: $k) }`, { v: visitRow.id, t: [techId], k: key('assign-survey') })
+  let techId: string = visitRow.technicians.map((t: any) => t.id).find((id: string) => crew.has(id)) ?? ''
+  if (!techId) {
+    // Booked to someone off the crew list: the dispatcher hands it to a technician free in that slot.
+    const free: any[] = await one(dispatcher, 'staffVisitSlots', `query($f: String!) { staffVisitSlots(from: $f, days: 1) }`, { f: slot.date })
+    techId = free.find((s: any) => s.slotIndex === slot.slotIndex)?.technicianIds.find((id: string) => crew.has(id)) ?? ''
+    if (!techId) throw new Error('No field technician is free for the survey slot.')
+    await dispatcher.gql(`mutation($v: ID!, $t: [ID!]!, $k: String!) { assignVisit(visitId: $v, technicianIds: $t, idempotencyKey: $k) }`, { v: visitRow.id, t: [techId], k: key('assign-survey') })
+  }
+  const tech = crew.get(techId)!
   await tech.gql(`mutation($v: ID!, $k: String!) { checkInVisit(visitId: $v, lat: "30.0852", lng: "-97.8403", idempotencyKey: $k) }`, { v: visitRow.id, k: key('checkin-survey') })
   const surveyItems: any[] = (await tech.gql(`{ checklistTemplates(where: { kind: { equals: "survey_farm" } }) { items { id inputType isRequired } } }`)).checklistTemplates[0]?.items ?? []
   const answer = (i: any) => ({ itemId: i.id, value: i.inputType === 'number' ? 4 : i.inputType === 'yes_no' ? true : i.inputType === 'choice' ? 'Loam' : 'Family of five' })
