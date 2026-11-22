@@ -28,6 +28,7 @@ export const staffTypeDefs = graphql`
     staffVisitSlots(from: String!, days: Int, branchId: ID, technicianId: ID): JSON
     cancellationPreview(orderId: ID!, byCompany: Boolean, kitReturned: Boolean): JSON
     staffCart(cartId: ID!): JSON
+    visitChecklist(visitId: ID!, kind: String): JSON
   }
   type Mutation {
     addLead(input: JSON!, idempotencyKey: String!): JSON
@@ -128,6 +129,16 @@ export const staffResolvers = {
       const order = await c.prisma.order.findUnique({ where: { id: a.orderId }, include: { lines: true } })
       if (!order) throw new DomainError(Codes.NOT_FOUND, 'Order not found.')
       return cancellationRefund(order, await getSettings(c.prisma), new Date(), { byCompany: Boolean(a.byCompany), kitReturned: Boolean(a.kitReturned) })
+    }),
+    // The checklist the server enforces for this visit (P26), and the commissioning one an install visit can also complete.
+    visitChecklist: op(async (_r, a: { visitId: string; kind?: string }, c) => {
+      const actor = staff(c)
+      requirePermission(actor, 'canDoFieldWork', 'canManageVisits')
+      if (actor.kind !== 'user') throw new DomainError(Codes.NOT_AUTHORIZED, 'Sign in.')
+      const visit = await c.prisma.visit.findFirst({ where: { id: a.visitId, ...(actor.permissions.has('canManageVisits') ? {} : { technicians: { some: { id: actor.userId } } }) }, select: { type: true, siteId: true, installationId: true } })
+      if (!visit) throw new DomainError(Codes.NOT_FOUND, 'Visit not found.')
+      const t = await visits.checklistFor(c.prisma, a.kind === 'commissioning' ? { type: 'commissioning', siteId: visit.siteId, installationId: null } : visit)
+      return t ? { id: t.id, name: t.name, kind: t.kind, items: t.items.map(i => ({ id: i.id, prompt: i.prompt, helpText: i.helpText, inputType: i.inputType, choices: i.choices, unit: i.unit, isRequired: i.isRequired })) } : null
     }),
     staffCart: op(async (_r, a: { cartId: string }, c) => {
       requirePermission(staff(c), 'canManageOrders')
