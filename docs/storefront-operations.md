@@ -219,6 +219,12 @@ Behaviour:
 - If the email or phone matches an existing customer (someone who enquired or bought before), it links only when `code` is the public code of one of **that** customer's quotes, orders, visits or systems.
   - Otherwise: `GUARD_FAILED`, "We already have your details from an earlier enquiry or order. To link this account, enter the code on your quote, receipt or system sticker."
   - Show a code field when you get this error, then retry with the same key's input plus `code`. A new key is fine as well.
+- If neither the email nor the phone matches anyone, but `code` is the code of a **quote or order** (these are sent privately to the customer), the login is linked to that code's customer.
+  - The customer's email and phone on file are left as they are. The new email is only the sign-in email, kept on the login. Staff see the link in the audit log as `customer.account_linked`.
+  - A **visit or system** code (the system code is printed on the sticker on the digester, so anyone passing can read it) does not link on its own. It links only when the email or phone also matches, as above.
+  - Otherwise: `GUARD_FAILED`, "To link this account, enter the code on your quote or order receipt, or use the email or phone number we have on file."
+- If the code's customer already has a login: `GUARD_FAILED`, "An account with this email already exists. Sign in."
+- With no code and no match, a new customer is created.
 - Password reset stays the starter's (`/reset-password`).
 
 ### `myOverview` (query, customer; S20)

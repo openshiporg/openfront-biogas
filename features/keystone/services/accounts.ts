@@ -16,7 +16,10 @@ import { normEmail, normPhone, str } from './util'
 export const ACCOUNT_EXISTS = 'An account with this email already exists. Sign in.'
 export const NEED_CODE = 'We already have your details from an earlier enquiry or order. To link this account, enter the code on your quote, receipt or system sticker.'
 
-export async function codeOwner(tx: Tx, code: string) {
+export const NEED_PRIVATE_CODE = 'To link this account, enter the code on your quote or order receipt, or use the email or phone number we have on file.'
+
+/** Whose record the code is, and whether it was sent privately (quote, order) or can be seen by others (visit, system sticker). */
+export async function codeHolder(tx: Tx, code: string): Promise<{ customerId: string; private: boolean } | null> {
   const c = str(code, 40).toUpperCase()
   if (!c) return null
   const [q, o, v, s] = await Promise.all([
@@ -25,7 +28,14 @@ export async function codeOwner(tx: Tx, code: string) {
     tx.visit.findUnique({ where: { publicCode: c }, select: { customerId: true } }),
     tx.installedSystem.findUnique({ where: { publicCode: c }, select: { customerId: true } }),
   ])
-  return q?.customerId ?? o?.customerId ?? v?.customerId ?? s?.customerId ?? null
+  const privateOwner = q?.customerId ?? o?.customerId
+  if (privateOwner) return { customerId: privateOwner, private: true }
+  const seenOwner = v?.customerId ?? s?.customerId
+  return seenOwner ? { customerId: seenOwner, private: false } : null
+}
+
+export async function codeOwner(tx: Tx, code: string) {
+  return (await codeHolder(tx, code))?.customerId ?? null
 }
 
 export async function registerCustomer(uow: UnitOfWork, actor: Actor, raw: { name?: string; email?: string; phone?: string; password?: string; code?: string }) {
@@ -41,21 +51,27 @@ export async function registerCustomer(uow: UnitOfWork, actor: Actor, raw: { nam
   const existingUser = await tx.user.findFirst({ where: { email: { equals: email, mode: 'insensitive' } }, select: { id: true } })
   if (existingUser) throw new DomainError(Codes.GUARD_FAILED, ACCOUNT_EXISTS)
 
-  const found = await tx.customer.findMany({ where: { OR: [{ email }, ...(phone ? [{ phone }] : [])] }, select: { id: true, userId: true } })
-  // Nothing on file under this email or phone, but they hold the code of a record: that code proves
-  // who they are (a quote asked for under another email), so they get that customer, not an empty one.
-  const owner = found.length ? null : await codeOwner(tx, raw.code ?? '')
-  const holder = owner ? await tx.customer.findUnique({ where: { id: owner }, select: { id: true, userId: true } }) : null
-  const matches = holder ? [holder] : found
+  const matches = await tx.customer.findMany({ where: { OR: [{ email }, ...(phone ? [{ phone }] : [])] }, select: { id: true, userId: true } })
+  const holder = raw.code ? await codeHolder(tx, raw.code) : null
   let customerId: string
+  let codeOnly = false
   if (matches.length) {
-    const owner = await codeOwner(tx, raw.code ?? '')
-    const match = owner ? matches.find(m => m.id === owner) : undefined
+    const match = holder ? matches.find(m => m.id === holder.customerId) : undefined
     if (!match) throw new DomainError(Codes.GUARD_FAILED, NEED_CODE)
     if (match.userId) throw new DomainError(Codes.GUARD_FAILED, ACCOUNT_EXISTS)
     customerId = match.id
     // The customer's email becomes the login email they just proved.
     await tx.customer.update({ where: { id: customerId }, data: { email, ...(phone ? { phone } : {}) } })
+  } else if (holder) {
+    // Nothing on file under this email or phone. Only a code sent privately (quote, order) proves who they
+    // are; a visit code or the sticker on the digester can be read by anyone passing. The customer's email
+    // and phone on file stay as they are: the login email lives on the User.
+    if (!holder.private) throw new DomainError(Codes.GUARD_FAILED, NEED_PRIVATE_CODE)
+    const owner = await tx.customer.findUnique({ where: { id: holder.customerId }, select: { id: true, userId: true } })
+    if (!owner) throw new DomainError(Codes.GUARD_FAILED, NEED_PRIVATE_CODE)
+    if (owner.userId) throw new DomainError(Codes.GUARD_FAILED, ACCOUNT_EXISTS)
+    customerId = owner.id
+    codeOnly = true
   } else {
     const settings = await getSettings(tx)
     const created = await tx.customer.create({
@@ -64,6 +80,6 @@ export async function registerCustomer(uow: UnitOfWork, actor: Actor, raw: { nam
     customerId = created.id
   }
   const user = await tx.user.create({ data: { name, email, phone, password: await bcrypt.hash(password, 10), isActive: true, roleId: null, customer: { connect: { id: customerId } } } })
-  auditChange(uow, actor, 'User', user.id, matches.length ? 'customer.account_linked' : 'customer.registered', { customerId })
+  auditChange(uow, actor, 'User', user.id, matches.length || codeOnly ? 'customer.account_linked' : 'customer.registered', { customerId, ...(codeOnly ? { linkedBy: 'code', loginEmail: email } : {}) })
   return { customerId }
 }
