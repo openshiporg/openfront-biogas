@@ -184,6 +184,18 @@ async function main() {
   } })
   note('4c commissioned', `system ${system.number ?? system.systemNumber ?? system.id}, trained and signed`)
 
+  // P30: the technician takes cash on site the same day; it waits for finance, who verifies it.
+  const fails = async (p: Promise<unknown>, code: string) => { try { await p } catch (e) { if (String(e).includes(code)) return; throw e } throw new Error(`Expected ${code}`) }
+  const cashRef = `CASH${Date.now().toString().slice(-8)}`
+  await fails(one(tech, 'collectOnSite', `mutation($v: ID!, $r: String!, $k: String!) { collectOnSite(visitId: $v, provider: "cash", reference: $r, amount: 999999999, idempotencyKey: $k) }`, { v: installVisit.id, r: `${cashRef}X`, k: key('collect-too-much') }), 'INVALID_INPUT')
+  const cash: any = await one(tech, 'collectOnSite', `mutation($v: ID!, $r: String!, $k: String!) { collectOnSite(visitId: $v, provider: "cash", reference: $r, amount: 5000, idempotencyKey: $k) }`, { v: installVisit.id, r: cashRef, k: key('collect') })
+  if (cash.status !== 'submitted') throw new Error(`Cash on site reads ${cash.status}`)
+  await fails(one(tech, 'collectOnSite', `mutation($v: ID!, $r: String!, $k: String!) { collectOnSite(visitId: $v, provider: "cash", reference: $r, amount: 100, idempotencyKey: $k) }`, { v: installVisit.id, r: cashRef, k: key('collect-again') }), 'DUPLICATE_REFERENCE')
+  const waiting: any = (await finance.gql(`query($id: ID!) { payment(where: { id: $id }) { status method collectedBy { id } } }`, { id: cash.paymentId })).payment
+  if (waiting.status !== 'submitted' || waiting.method !== 'cash' || waiting.collectedBy?.id !== techId) throw new Error('The cash payment does not show the technician waiting for finance.')
+  await finance.gql(`mutation($p: ID!, $k: String!) { verifyOfflinePayment(paymentId: $p, idempotencyKey: $k) }`, { p: cash.paymentId, k: key('verify-cash') })
+  note('4d cash taken on site', `${cash.amount} minor units, reference ${cashRef}, collected by the technician, verified by finance`)
+
   // 5. Customer: system and warranty, pay an instalment (card or reference), report a problem, see it resolved.
   const mine: any[] = await one(customer, 'mySystems', `{ mySystems }`)
   const sys = mine[0]

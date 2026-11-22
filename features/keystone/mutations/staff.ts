@@ -15,7 +15,7 @@ import { cancellationRefund } from '../services/orders'
 import { getSettings } from '../services/settings'
 import { str } from '../services/util'
 import { addToCart, completeCart, newCart, priceCart, setCartFulfilment } from '../services/carts'
-import { startSession } from '../services/money-links'
+import { collectOnSite, startSession } from '../services/money-links'
 
 const graphql = String.raw
 
@@ -67,6 +67,7 @@ export const staffTypeDefs = graphql`
 
     createPayLink(input: JSON!, idempotencyKey: String!): JSON
     recordOfflinePayment(sessionCode: String!, provider: String!, reference: String!, payerPhone: String, idempotencyKey: String!): JSON
+    collectOnSite(visitId: ID!, provider: String!, reference: String!, payerPhone: String, amount: Int, idempotencyKey: String!): JSON
     verifyOfflinePayment(paymentId: ID!, expectedVersion: Int, idempotencyKey: String!): JSON
     rejectOfflinePayment(paymentId: ID!, reason: String!, expectedVersion: Int, idempotencyKey: String!): JSON
     reconcilePaymentSession(sessionId: ID!): JSON
@@ -198,6 +199,7 @@ export const staffResolvers = {
       requirePermission(actor, 'canManagePayments', 'canManageOrders', 'canManageVisits', 'canManageTickets')
       return startSession(uow, actor, a.input ?? {})
     }),
+    collectOnSite: cmd('collectOnSite', (uow, actor, a: K & { visitId: string; provider: string; reference: string; payerPhone?: string; amount?: number }) => collectOnSite(uow, actor, a)),
     recordOfflinePayment: cmd('recordOfflinePayment', async (uow, actor, a: K & { sessionCode: string; provider: string; reference: string; payerPhone?: string }) => {
       requirePermission(actor, 'canManagePayments', 'canDoFieldWork')
       const s = await payments.sessionByCode(uow.tx, a.sessionCode)

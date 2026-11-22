@@ -41,6 +41,7 @@ const OPS: Record<string, Record<string, string>> = {
   addTicketNote: { ticketId: 'ID!', body: 'String!', isCustomerVisible: 'Boolean' },
   createPayLink: { input: 'JSON!' },
   recordOfflinePayment: { sessionCode: 'String!', provider: 'String!', reference: 'String!', payerPhone: 'String' },
+  collectOnSite: { visitId: 'ID!', provider: 'String!', reference: 'String!', payerPhone: 'String', amount: 'Int' },
   verifyOfflinePayment: { paymentId: 'ID!', expectedVersion: 'Int' },
   rejectOfflinePayment: { paymentId: 'ID!', reason: 'String!', expectedVersion: 'Int' },
   refundPayment: { paymentId: 'ID!', amount: 'Int!', reason: 'String!', payoutReference: 'String' },
