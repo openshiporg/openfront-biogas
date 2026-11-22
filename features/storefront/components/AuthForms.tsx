@@ -26,9 +26,10 @@ export function RegisterForm() {
   const [key] = useKey()
   const [state, action, pending] = useActionState<Result<null> | null, FormData>(registerAction, null)
   const failed = state && !state.ok ? state : null
-  // The server asks for the code from a quote, receipt, visit or sticker when it already knows this email or phone.
+  // The server asks for a code when it already knows this email or phone, and refuses a visit or sticker code on its own
+  // (only quote and order codes link a new email); both refusals belong under the code field.
   const v = failed?.values ?? {}
-  const needsCode = Boolean(failed && (failed.field === 'code' || /code on your quote|enter the code/i.test(failed.error)))
+  const needsCode = Boolean(failed && (failed.field === 'code' || /code on your quote|enter the code|to link this account/i.test(failed.error)))
   return (
     <form action={action} className="sf-card space-y-4 p-6">
       <input type="hidden" name="idempotencyKey" value={key} />
