@@ -87,12 +87,15 @@ function Failed({ error }: { error: string }) {
 
 export async function AccountHomeScreen() {
   await customerOrSignIn('/account')
-  const [r, store, ord] = await Promise.all([mine<any>('myOverview'), getStore(), mine<any>('myOrders')])
+  const [r, store, ord, pay] = await Promise.all([mine<any>('myOverview'), getStore(), mine<any>('myOrders'), mine<any>('myPayments')])
   if (!r.ok) return <Failed error={r.error} />
   const o = r.data
   const tz = store.timezone
-  // Orders with money still owed and no instalment plan already listed under Payments due.
-  const planned = new Set(o.paymentsDue.map((i: any) => i.order?.number).filter(Boolean))
+  // Orders with money still owed that no instalment plan covers (plan instalments show under Payments due when they fall due).
+  const planned = new Set([
+    ...o.paymentsDue.map((i: any) => i.order?.number),
+    ...(pay.ok ? pay.data.plans : []).filter((p: any) => !['cancelled', 'completed', 'defaulted'].includes(p.status)).map((p: any) => p.order?.number),
+  ].filter(Boolean))
   const toPay = (ord.ok ? ord.data.orders : []).filter((x: any) => x.balanceAmount > 0 && !['cancelled', 'refunded', 'draft'].includes(x.status) && !planned.has(x.number))
   const nothing = !o.nextVisits.length && !o.paymentsDue.length && !o.toGetReady.length && !o.openQuotes.length && !toPay.length
   return (
