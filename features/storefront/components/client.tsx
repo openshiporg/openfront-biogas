@@ -1,11 +1,16 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
-/** One idempotency key per attempt: kept across retries of the same form, renewed after success. */
+const make = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`)
+
+/**
+ * One idempotency key per attempt: kept across retries of the same form, renewed after success.
+ * Made in the browser after mount, so the server HTML and the hydrated form never disagree.
+ */
 export function useKey() {
-  const make = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`)
-  const [key, setKey] = useState(make)
+  const [key, setKey] = useState('')
+  useEffect(() => setKey(k => k || make()), [])
   const renew = useCallback(() => setKey(make()), [])
   return [key, renew] as const
 }

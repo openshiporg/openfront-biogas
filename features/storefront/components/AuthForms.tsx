@@ -27,17 +27,18 @@ export function RegisterForm() {
   const [state, action, pending] = useActionState<Result<null> | null, FormData>(registerAction, null)
   const failed = state && !state.ok ? state : null
   // The server asks for the code from a quote, receipt, visit or sticker when it already knows this email or phone.
+  const v = failed?.values ?? {}
   const needsCode = Boolean(failed && (failed.field === 'code' || /code on your quote|enter the code/i.test(failed.error)))
   return (
     <form action={action} className="sf-card space-y-4 p-6">
       <input type="hidden" name="idempotencyKey" value={key} />
-      <Field label="Your name" htmlFor="name"><input id="name" name="name" required autoComplete="name" className="sf-input" /></Field>
-      <Field label="Email" htmlFor="email"><input id="email" name="email" type="email" required autoComplete="email" className="sf-input" /></Field>
-      <Field label="Phone" htmlFor="phone"><input id="phone" name="phone" type="tel" autoComplete="tel" className="sf-input" /></Field>
+      <Field label="Your name" htmlFor="name"><input id="name" name="name" defaultValue={v.name} required autoComplete="name" className="sf-input" /></Field>
+      <Field label="Email" htmlFor="email"><input id="email" name="email" defaultValue={v.email} type="email" required autoComplete="email" className="sf-input" /></Field>
+      <Field label="Phone" htmlFor="phone"><input id="phone" name="phone" defaultValue={v.phone} type="tel" autoComplete="tel" className="sf-input" /></Field>
       <Field label="Password" htmlFor="password" help="At least 8 characters"><input id="password" name="password" type="password" minLength={8} required autoComplete="new-password" className="sf-input" /></Field>
       <div className={needsCode ? 'rounded-[14px] border-2 border-[var(--clay)] bg-[var(--clay-soft)] p-3' : ''}>
         <Field label="Code from your quote or receipt" htmlFor="code" help="Only if you have enquired or bought from us before" error={needsCode ? failed!.error : null}>
-          <input id="code" name="code" autoComplete="off" className="sf-input font-mono" aria-invalid={needsCode || undefined} autoFocus={needsCode} />
+          <input id="code" name="code" defaultValue={v.code} autoComplete="off" className="sf-input font-mono" aria-invalid={needsCode || undefined} autoFocus={needsCode} />
         </Field>
       </div>
       <FormError error={failed && !needsCode ? failed.error : null} />

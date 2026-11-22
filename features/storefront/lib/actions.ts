@@ -11,9 +11,10 @@ import { CART_COOKIE, SESSION_COOKIE, gql } from './data/client'
  * request, a booking or a payment.
  */
 
-export type Result<T = unknown> = { ok: true; data: T } | { ok: false; error: string; code?: string | null; field?: string | null }
+export type Result<T = unknown> = { ok: true; data: T } | { ok: false; error: string; code?: string | null; field?: string | null; values?: Record<string, string> }
 
 async function call<T>(query: string, variables: Record<string, unknown>, key: string): Promise<Result<T>> {
+  if ('k' in variables && !variables.k) return { ok: false, error: 'The page is still loading. Please try again in a moment.' }
   const r = await gql<Record<string, T>>(query, variables)
   if (!r.ok) return { ok: false, error: r.error, code: r.code, field: r.field }
   return { ok: true, data: r.data[key] }
@@ -204,12 +205,14 @@ export async function registerAction(_prev: Result<null> | null, form: FormData)
     phone: String(form.get('phone') || '').trim(),
     password: String(form.get('password') || ''),
     code: String(form.get('code') || '').trim() || undefined,
-    idempotencyKey: String(form.get('idempotencyKey') || ''),
+    idempotencyKey: String(form.get('idempotencyKey') || '') || crypto.randomUUID(),
   }
-  if (!input.name || !input.email || input.password.length < 8) return { ok: false, error: 'Enter your name, email and a password of at least 8 characters.' }
+  // React clears a form after its action; hand back what was typed (never the password) so a refusal costs no retyping.
+  const values = { name: input.name, email: input.email, phone: input.phone, code: input.code ?? '' }
+  if (!input.name || !input.email || input.password.length < 8) return { ok: false, error: 'Enter your name, email and a password of at least 8 characters.', values }
   // The server refuses to link an email or phone already on file unless `code` proves it (field: 'code').
   const r = await gql<{ registerCustomer: { customerId: string } | null }>('mutation($input: JSON!) { registerCustomer(input: $input) }', { input })
-  if (!r.ok) return { ok: false, error: r.error, code: r.code, field: r.field }
+  if (!r.ok) return { ok: false, error: r.error, code: r.code, field: r.field, values }
   const s = await startSession(input.email, input.password)
   if (!s.ok) return s
   redirect('/account')

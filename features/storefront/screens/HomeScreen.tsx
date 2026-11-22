@@ -40,8 +40,8 @@ export async function HomeScreen() {
               ))}
             </ul>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href="/get-a-quote" className="sf-btn !min-h-[52px] !px-7 text-lg">Get a free quote <Arrow /></Link>
-              <Link href="/calculator" className="sf-btn sf-btn-white !min-h-[52px]">Size my system</Link>
+              <Link href="/get-a-quote" className="sf-btn !min-h-[52px] !px-7 text-lg">Get a quote <Arrow /></Link>
+              {store.configured && store.surveyFeeAmount === 0 && <span className="text-[0.95rem] font-semibold text-white">Free site survey</span>}
             </div>
             {lowest && (
               <p className="mt-5 text-[0.95rem] text-[#dfe6cc]">
@@ -68,31 +68,9 @@ export async function HomeScreen() {
         </ol>
       </section>
 
-      {/* Benefits */}
-      <section className="mx-auto max-w-[1240px] px-4 sm:px-6" aria-labelledby="benefits">
-        <div className="sf-panel grid gap-6 px-6 py-7 md:grid-cols-[auto_1fr] md:items-center md:px-10">
-          <h2 id="benefits" className="text-[1.6rem] font-extrabold leading-tight md:max-w-[14rem] md:border-r md:border-[#cdd5b8] md:pr-8">Real benefits for your home and land</h2>
-          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {BENEFITS.map(b => (
-              <li key={b.text} className="flex items-center gap-3 text-[0.98rem] leading-snug text-[var(--forest)]"><b.icon className="h-11 w-11 shrink-0" />{b.text}</li>
-            ))}
-          </ul>
-        </div>
-        {store.impactNumbers.length > 0 && (
-          <dl className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-            {store.impactNumbers.map(n => (
-              <div key={n.label} className="sf-card px-5 py-4 text-center">
-                <dt className="text-sm text-[var(--muted)]">{n.label}</dt>
-                <dd className="font-[family-name:var(--font-sf-head)] text-3xl font-extrabold text-[var(--clay)]">{n.value}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
-      </section>
-
       {/* Systems */}
       {systems.length > 0 && (
-        <section className="mx-auto max-w-[1240px] px-4 pt-14 sm:px-6" aria-labelledby="systems">
+        <section className="mx-auto max-w-[1240px] px-4 pb-12 pt-4 sm:px-6" aria-labelledby="systems">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <h2 id="systems" className="text-[1.8rem] font-extrabold">Our systems</h2>
             <Link href="/systems" className="flex min-h-11 items-center gap-2 font-bold text-[var(--clay)] hover:underline">Compare all systems <Arrow className="h-4 w-4" /></Link>
@@ -116,6 +94,28 @@ export async function HomeScreen() {
           </ul>
         </section>
       )}
+
+      {/* Benefits */}
+      <section className="mx-auto max-w-[1240px] px-4 sm:px-6" aria-labelledby="benefits">
+        <div className="sf-panel grid gap-6 px-6 py-7 md:grid-cols-[auto_1fr] md:items-center md:px-10">
+          <h2 id="benefits" className="text-[1.6rem] font-extrabold leading-tight md:max-w-[14rem] md:border-r md:border-[#cdd5b8] md:pr-8">Real benefits for your home and land</h2>
+          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {BENEFITS.map(b => (
+              <li key={b.text} className="flex items-center gap-3 text-[0.98rem] leading-snug text-[var(--forest)]"><b.icon className="h-11 w-11 shrink-0" />{b.text}</li>
+            ))}
+          </ul>
+        </div>
+        {store.impactNumbers.length > 0 && (
+          <dl className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+            {store.impactNumbers.map(n => (
+              <div key={n.label} className="sf-card px-5 py-4 text-center">
+                <dt className="text-sm text-[var(--muted)]">{n.label}</dt>
+                <dd className="font-[family-name:var(--font-sf-head)] text-3xl font-extrabold text-[var(--clay)]">{n.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </section>
 
       {/* About */}
       <section className="mx-auto grid max-w-[1240px] gap-8 px-4 pt-14 sm:px-6 lg:grid-cols-[1.1fr_1fr_0.9fr] lg:items-center" aria-labelledby="about">
@@ -169,9 +169,9 @@ export async function HomeScreen() {
         <div className="pointer-events-none absolute -bottom-12 right-0 h-56 w-56 rounded-full bg-[#8e3a17]/50 blur-2xl" aria-hidden="true" />
         <h2 className="relative text-[1.8rem] font-extrabold !text-white sm:text-[2.2rem]">Ready to cook with your own gas?</h2>
         <p className="relative mx-auto mt-2 max-w-2xl text-lg text-[#fbe9df]">
-          Tell us about your home or farm. We reply with a quote{store.surveyFeeAmount > 0 ? `, and can book a site survey (${money(store.surveyFeeAmount, store.currencyCode, { whole: true })}, taken off your system)` : ' and a free site survey'}.
+          Tell us about your home or farm. We reply with a quote{store.surveyFeeAmount > 0 ? `, and can book a site survey (${money(store.surveyFeeAmount, store.currencyCode, { whole: true })}, taken off your system)` : store.configured ? ' and a free site survey' : ''}.
         </p>
-        <Link href="/get-a-quote" className="sf-btn sf-btn-white relative mt-6 !min-h-[52px] !px-8 text-lg">Get a free quote <Arrow /></Link>
+        <Link href="/get-a-quote" className="sf-btn sf-btn-white relative mt-6 !min-h-[52px] !px-8 text-lg">Get a quote <Arrow /></Link>
       </section>
     </>
   )

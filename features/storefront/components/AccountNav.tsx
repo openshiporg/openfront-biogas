@@ -13,7 +13,7 @@ const TABS = [
 ]
 
 export function AccountNav() {
-  const path = usePathname()
+  const path = usePathname() ?? ''
   return (
     <nav aria-label="Account" className="-mb-px mt-4 flex gap-1 overflow-x-auto">
       {TABS.map(t => {
