@@ -214,7 +214,8 @@ export async function registerAction(_prev: Result<null> | null, form: FormData)
   const r = await gql<{ registerCustomer: { customerId: string } | null }>('mutation($input: JSON!) { registerCustomer(input: $input) }', { input })
   if (!r.ok) return { ok: false, error: r.error, code: r.code, field: r.field, values }
   const s = await startSession(input.email, input.password)
-  if (!s.ok) return s
+  // The account exists now; trying again here would only say "already exists", so send them to sign in.
+  if (!s.ok) redirect('/sign-in?created=1')
   redirect('/account')
 }
 

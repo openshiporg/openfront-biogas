@@ -17,13 +17,13 @@ const when = (iso: string | null, tz: string) => (iso ? new Intl.DateTimeFormat(
 
 /* ------------------------------------------------------------------ S19 */
 
-export async function SignInScreen({ next }: { next?: string }) {
+export async function SignInScreen({ next, created }: { next?: string; created?: boolean }) {
   const viewer = await getViewer()
   if (viewer) redirect(viewer.isStaff ? '/dashboard' : next && next.startsWith('/') && !next.startsWith('//') ? next : '/account')
   return (
     <>
       <PageHead title="Sign in" intro="See your quotes, orders, payments, systems and problem reports." />
-      <Section className="max-w-[560px]"><SignInForm next={next} /></Section>
+      <Section className="max-w-[560px]">{created && <div className="mb-4"><Notice title="Your account is ready">Sign in with the email and password you just chose.</Notice></div>}<SignInForm next={next} /></Section>
     </>
   )
 }
@@ -244,7 +244,14 @@ export async function AccountPaymentsScreen() {
       <div>
         <h2 className="text-[1.5rem] font-extrabold">History</h2>
         {payments.length === 0 ? <p className="mt-2 text-[var(--muted)]">No payments yet.</p> : (
-          <div className="sf-card mt-4 overflow-x-auto">
+          <>
+          <ul className="sf-card mt-4 divide-y divide-[var(--line)] px-5 sm:hidden">{payments.map((p: any, i: number) => (
+            <li key={i} className="flex justify-between gap-3 py-3 text-[0.95rem]">
+              <span>{p.order?.number ?? ''} · {word(p.method)}<span className="block text-sm text-[var(--muted)]">{date(p.createdAt, tz)}{p.reference ? <> · <span className="font-mono">{p.reference}</span></> : null}{p.receiptNumber ? <> · Receipt {p.receiptNumber}</> : null}</span></span>
+              <span className="text-right">{money(p.amount, p.currencyCode)}<br /><Status value={p.status} /></span>
+            </li>
+          ))}</ul>
+          <div className="sf-card mt-4 hidden overflow-x-auto sm:block">
             <table className="w-full min-w-[560px] text-[0.95rem]">
               <caption className="sr-only">Payment history</caption>
               <thead className="bg-[var(--sage)] text-left text-[var(--forest)]"><tr><th className="px-4 py-2">Date</th><th className="px-4 py-2">For</th><th className="px-4 py-2">How</th><th className="px-4 py-2">Receipt</th><th className="px-4 py-2 text-right">Amount</th><th className="px-4 py-2 text-right">Status</th></tr></thead>
@@ -253,6 +260,7 @@ export async function AccountPaymentsScreen() {
               ))}</tbody>
             </table>
           </div>
+          </>
         )}
       </div>
     </Section>
