@@ -84,13 +84,12 @@ export async function orderView(tx: Tx, where: { publicCode?: string; id?: strin
       plan: { include: { installments: { orderBy: { sequence: 'asc' } } } },
       installation: { include: { prepTasks: { orderBy: { sortOrder: 'asc' } }, visits: { orderBy: { createdAt: 'asc' }, select: { type: true, status: true, windowStart: true, windowEnd: true, publicCode: true, number: true } } } },
       refunds: { select: { amount: true, status: true, createdAt: true, reason: true } },
-      pickupBranch: false as never,
       branch: { select: { name: true, address: true, phone: true } },
       quote: { select: { publicCode: true, number: true } },
       invoices: { select: { number: true, status: true, totalAmount: true, issuedAt: true, dueAt: true } },
       systems: { select: { id: true, number: true, publicCode: true } },
-    } as never,
-  }) as any
+    },
+  })
   if (!o) return null
   const settings = await getSettings(tx)
   const now = new Date()
@@ -134,7 +133,7 @@ export async function visitView(tx: Tx, code: string) {
 export async function systemView(tx: Tx, where: { publicCode?: string; id?: string }, full = false) {
   const s = await tx.installedSystem.findUnique({
     where: where.publicCode ? { publicCode: where.publicCode } : { id: where.id! },
-    include: { product: { select: { name: true, slug: true, id: true } }, serializedUnit: { select: { serialNumber: true } }, warranties: { orderBy: { component: 'asc' } }, subscriptions: { include: { plan: { select: { name: true, slug: true, visitsPerYear: true, partsDiscountPercent: true } } }, orderBy: { createdAt: 'desc' } }, site: { select: { label: true, city: true } }, tickets: full ? { orderBy: { createdAt: 'desc' }, take: 10, select: { id: true, number: true, status: true, category: true, createdAt: true, resolvedAt: true } } : false, visits: full ? { where: { status: { in: ['scheduled', 'requested', 'completed'] } }, orderBy: { createdAt: 'desc' }, take: 10, select: { number: true, type: true, status: true, windowStart: true, dueAt: true, publicCode: true } } : false } as never,
+    include: { product: { select: { name: true, slug: true, id: true } }, serializedUnit: { select: { serialNumber: true } }, warranties: { orderBy: { component: 'asc' } }, subscriptions: { include: { plan: { select: { name: true, slug: true, visitsPerYear: true, partsDiscountPercent: true } } }, orderBy: { createdAt: 'desc' } }, site: { select: { label: true, city: true } }, tickets: full ? { orderBy: { createdAt: 'desc' }, take: 10, select: { id: true, number: true, status: true, category: true, createdAt: true, resolvedAt: true } } : false, visits: full ? { where: { status: { in: ['scheduled', 'requested', 'completed'] } }, orderBy: { createdAt: 'desc' }, take: 10, select: { number: true, type: true, status: true, windowStart: true, dueAt: true, publicCode: true } } : false },
   }) as any
   if (!s) return null
   const now = new Date()
