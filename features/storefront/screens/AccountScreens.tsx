@@ -87,11 +87,14 @@ function Failed({ error }: { error: string }) {
 
 export async function AccountHomeScreen() {
   await customerOrSignIn('/account')
-  const [r, store] = await Promise.all([mine<any>('myOverview'), getStore()])
+  const [r, store, ord] = await Promise.all([mine<any>('myOverview'), getStore(), mine<any>('myOrders')])
   if (!r.ok) return <Failed error={r.error} />
   const o = r.data
   const tz = store.timezone
-  const nothing = !o.nextVisits.length && !o.paymentsDue.length && !o.toGetReady.length && !o.openQuotes.length
+  // Orders with money still owed and no instalment plan already listed under Payments due.
+  const planned = new Set(o.paymentsDue.map((i: any) => i.order?.number).filter(Boolean))
+  const toPay = (ord.ok ? ord.data.orders : []).filter((x: any) => x.balanceAmount > 0 && !['cancelled', 'refunded', 'draft'].includes(x.status) && !planned.has(x.number))
+  const nothing = !o.nextVisits.length && !o.paymentsDue.length && !o.toGetReady.length && !o.openQuotes.length && !toPay.length
   return (
     <Section className="space-y-8">
       <h1 className="text-[1.8rem] font-extrabold">What’s next</h1>
@@ -102,6 +105,17 @@ export async function AccountHomeScreen() {
             <h2 className="text-xl font-bold">Quotes waiting for you</h2>
             <ul className="mt-3 divide-y divide-[var(--line)]">{o.openQuotes.map((q: any) => (
               <li key={q.code} className="flex flex-wrap items-center justify-between gap-2 py-3"><span><strong>{q.number}</strong> · {money(q.totalAmount, q.currencyCode)}{q.validUntil ? <span className="block text-sm text-[var(--muted)]">Valid until {date(q.validUntil, tz)}</span> : null}</span><Link href={`/quote/${q.code}`} className="sf-btn sf-btn-sm">Open</Link></li>
+            ))}</ul>
+          </div>
+        )}
+        {toPay.length > 0 && (
+          <div className="sf-card p-6">
+            <h2 className="text-xl font-bold">Orders to pay</h2>
+            <ul className="mt-3 divide-y divide-[var(--line)]">{toPay.map((x: any) => (
+              <li key={x.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                <span><strong>{x.number}</strong> · {money(x.balanceAmount, x.currencyCode)} to pay<span className="block text-sm text-[var(--muted)]">Placed {date(x.createdAt, tz)}</span></span>
+                <Link href={`/account/orders/${x.id}`} className="sf-btn sf-btn-ghost !min-h-10">See and pay</Link>
+              </li>
             ))}</ul>
           </div>
         )}
