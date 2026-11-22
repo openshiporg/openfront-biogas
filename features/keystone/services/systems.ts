@@ -177,14 +177,15 @@ async function accrueCommission(uow: UnitOfWork, order: { id: string; salesAgent
   auditChange(uow, systemActor('commissioning'), 'Commission', row.id, 'commission.accrued', { amount }, { toStatus: 'accrued' })
 }
 
-export type ReadingInput = { systemId: string; visitId?: string | null; source?: string; working?: boolean; cookingHours?: string; pressureKpa?: string; feedKg?: string; waterL?: string; slurryUsed?: boolean; problem?: string; at?: string }
+export type ReadingInput = { systemId: string; visitId?: string | null; source?: string; working?: boolean | string; cookingHours?: string; pressureKpa?: string; feedKg?: string; waterL?: string; slurryUsed?: boolean; problem?: string; at?: string }
 
 /** P35 / W7.2: a reading sets the system's functionality; "not working" opens a ticket. */
 export async function recordReading(uow: UnitOfWork, actor: Actor, input: ReadingInput) {
   const tx = uow.tx
   const system = await lockRow<any>(tx, 'InstalledSystem', input.systemId)
   const source = oneOf(input.source ?? 'call', ['customer', 'technician', 'call', 'meter'] as const, 'Source')
-  const working = input.working !== false
+  // Forms send yes/no or 'false'; only an explicit no counts as not working.
+  const working = !(input.working === false || ['no', 'false', '0'].includes(String(input.working ?? '').toLowerCase()))
   const at = input.at ? new Date(input.at) : uow.now
   const reading = await tx.systemReading.create({
     data: { systemId: system.id, visitId: input.visitId ?? null, source, working, at, cookingHours: input.cookingHours ? dec(input.cookingHours, 'Cooking hours') : null, pressureKpa: input.pressureKpa ? dec(input.pressureKpa, 'Pressure') : null, feedKg: input.feedKg ? dec(input.feedKg, 'Feed') : null, waterL: input.waterL ? dec(input.waterL, 'Water') : null, slurryUsed: Boolean(input.slurryUsed), problem: str(input.problem, 1000), recordedById: actorUserId(actor) },

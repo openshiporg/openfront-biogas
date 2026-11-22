@@ -104,7 +104,7 @@ export default async function FieldVisitPage({ params }: { params: Promise<{ id:
             fields={[
               { name: 'productId', label: 'Part (from your van)', kind: 'select', required: true, width: 'lg', options: [{ value: '', label: 'Pick…' }, ...(extra?.products ?? []).map((p: any) => ({ value: p.id, label: `${p.name} · ${p.sku}` }))] },
               { name: 'quantity', label: 'Qty', kind: 'number', required: true, width: 'sm', defaultValue: '1' },
-              { name: 'chargeable', label: 'Charge it', kind: 'select', width: 'sm', options: [{ value: '', label: 'No' }, { value: 'true', label: 'Yes' }] },
+              { name: 'chargeable', label: 'Charge it', kind: 'boolean', width: 'sm' },
             ]} />
         </Section>
       ) : v.partsUsed.length ? (

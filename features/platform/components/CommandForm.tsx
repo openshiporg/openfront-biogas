@@ -9,7 +9,9 @@ import { toMinor } from '../lib/format';
 
 export type FormField =
   | { name: string; label: string; kind?: 'text' | 'tel' | 'email' | 'date' | 'datetime-local' | 'password' | 'hidden' | 'money' | 'number'; required?: boolean; placeholder?: string; defaultValue?: string; width?: 'sm' | 'md' | 'lg' }
-  | { name: string; label: string; kind: 'select'; options: { value: string; label: string }[]; required?: boolean; defaultValue?: string; width?: 'sm' | 'md' | 'lg' };
+  | { name: string; label: string; kind: 'select'; options: { value: string; label: string }[]; required?: boolean; defaultValue?: string; width?: 'sm' | 'md' | 'lg' }
+  /** A Yes/No select sent as a real boolean. */
+  | { name: string; label: string; kind: 'boolean'; required?: boolean; defaultValue?: 'true' | 'false'; width?: 'sm' | 'md' | 'lg' };
 
 export const inputClass = 'h-9 w-full min-w-0 rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
@@ -82,6 +84,7 @@ export function CommandForm({ op, fields, fixed = {}, nest, rows, shape, submit,
         const values = Object.fromEntries(fields.map((f) => [f.name, String(form.get(f.name) ?? '').trim()]));
         // Money is typed in major units and sent as integer minor units; numbers are sent as numbers.
         for (const f of fields) {
+          if (f.kind === 'boolean') { (values as Record<string, unknown>)[f.name] = values[f.name] === 'true'; continue; }
           if (!values[f.name] || (f.kind !== 'money' && f.kind !== 'number')) continue;
           const n = f.kind === 'money' ? toMinor(values[f.name]) : Number(values[f.name]);
           if (n === null || !Number.isFinite(n)) { setError(`${f.label}: enter a number.`); return; }
@@ -105,7 +108,9 @@ export function CommandForm({ op, fields, fixed = {}, nest, rows, shape, submit,
       {fields.filter((f) => f.kind !== 'hidden').map((f) => (
         <label key={f.name} className={cn('flex w-full flex-col gap-1 text-xs text-muted-foreground', WIDTH[f.width ?? 'md'])}>
           {f.label}
-          {f.kind === 'select' ? (
+          {f.kind === 'boolean' ? (
+            <select name={f.name} defaultValue={f.defaultValue ?? 'false'} className={inputClass}><option value="false">No</option><option value="true">Yes</option></select>
+          ) : f.kind === 'select' ? (
             <select name={f.name} required={f.required} defaultValue={f.defaultValue} className={inputClass}>
               {f.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
