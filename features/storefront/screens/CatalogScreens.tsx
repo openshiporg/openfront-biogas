@@ -34,7 +34,8 @@ export function systemImages(list: Product[]) {
 export function systemImage(p: Product, all?: Product[]) {
   return systemImages(all ?? [p]).get(p.id) ?? '/storefront/system-home.jpg'
 }
-const partImage = (p: Product) => p.imageUrl || (p.type === 'appliance' ? '/storefront/parts.jpg' : null)
+/** Our stove photo stands in only for stoves; anything else without an uploaded photo shows its name, never another item's picture. */
+const partImage = (p: Product) => p.imageUrl || (/stove/i.test(`${p.category?.slug ?? ''} ${p.name}`) ? '/storefront/parts.jpg' : null)
 
 const specLine = (p: Product) =>
   p.spec ? [p.spec.capacityM3 && `${num(p.spec.capacityM3)} m³`, p.spec.dailyGasM3 && `${num(p.spec.dailyGasM3, 2)} m³ gas a day`, p.spec.servesPeople && `cooks for ${p.spec.servesPeople}`].filter(Boolean).join(' · ') : ''
@@ -328,9 +329,9 @@ export async function ServicePlansScreen() {
                 <p className="mt-2 font-[family-name:var(--font-sf-head)] text-3xl font-extrabold text-[var(--clay)]">{money(p.priceAmount, p.currencyCode)} <span className="text-base font-normal text-[var(--muted)]">{word(p.billing)}</span></p>
                 {p.description && <p className="mt-3">{p.description}</p>}
                 <ul className="mt-4 flex-1 space-y-2">
-                  {p.visitsPerYear > 0 && <li className="flex gap-2"><Check className="h-5 w-5 shrink-0" />{p.visitsPerYear} check-up visit{p.visitsPerYear === 1 ? '' : 's'} a year</li>}
-                  {Number(p.partsDiscountPercent) > 0 && <li className="flex gap-2"><Check className="h-5 w-5 shrink-0" />{num(p.partsDiscountPercent)}% off parts</li>}
-                  {p.priorityResponse && <li className="flex gap-2"><Check className="h-5 w-5 shrink-0" />Priority response when something goes wrong</li>}
+                  {p.includedItems.length === 0 && p.visitsPerYear > 0 && <li className="flex gap-2"><Check className="h-5 w-5 shrink-0" />{p.visitsPerYear} check-up visit{p.visitsPerYear === 1 ? '' : 's'} a year</li>}
+                  {p.includedItems.length === 0 && Number(p.partsDiscountPercent) > 0 && <li className="flex gap-2"><Check className="h-5 w-5 shrink-0" />{num(p.partsDiscountPercent)}% off parts</li>}
+                  {p.includedItems.length === 0 && p.priorityResponse && <li className="flex gap-2"><Check className="h-5 w-5 shrink-0" />Priority response when something goes wrong</li>}
                   {p.includedItems.map(x => <li key={x} className="flex gap-2"><Check className="h-5 w-5 shrink-0" />{x}</li>)}
                 </ul>
                 <Link href="/account/systems" className="sf-btn mt-6">Add to my system</Link>

@@ -34,7 +34,7 @@ export async function HomeScreen() {
         <div className="absolute inset-0 -z-10 hidden bg-gradient-to-r from-[#0f2a12] from-[30%] via-[#0f2a12]/80 via-[40%] to-transparent to-[52%] sm:block" />
         <div className="mx-auto flex max-w-[1240px] flex-col justify-center px-4 pb-9 pt-6 sm:min-h-[460px] sm:px-6 sm:py-10 lg:min-h-[500px]">
           <div className="text-white sm:max-w-[46%] lg:max-w-[40%]">
-            <h1 className="text-[2.1rem] font-extrabold leading-[1.04] !text-white sm:text-[2.8rem] lg:text-[3.3rem]">Turn your waste into clean cooking gas</h1>
+            <h1 className="text-[2.1rem] font-extrabold leading-[1.04] !text-white sm:text-[2.6rem] lg:w-max lg:text-[3rem]">Turn your waste into <br className="hidden lg:inline" />clean cooking gas</h1>
             <p className="mt-4 text-[1.05rem] leading-snug text-[#eef0e4] sm:text-lg">{store.heroText || `A complete biogas system for your home, farm or kitchen, from ${name === 'We' ? 'a team' : name} that stays with you after the install.`}</p>
             <ul className="mt-5 space-y-1.5 text-[1.05rem] sm:text-lg">
               {['We survey your site', 'We install your digester', 'We teach you to run it', 'We service it for years'].map(t => (
