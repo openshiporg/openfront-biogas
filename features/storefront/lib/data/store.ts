@@ -172,14 +172,16 @@ export const getSystem = cache(async (slug: string): Promise<SystemDetail | null
 
 export type Category = { id: string; name: string; slug: string; description: string }
 
-export const getShop = cache(async (): Promise<{ products: Product[]; categories: Category[] }> => {
+export type ShopItem = Product & { fitsSlugs: string[] }
+
+export const getShop = cache(async (): Promise<{ products: ShopItem[]; categories: Category[] }> => {
   const r = await gqlOrNull<{ products: any[]; productCategories: any[] }>(`{
     products(where: { type: { in: ["appliance", "part", "consumable"] }, isPublished: { equals: true }, sellOnline: { equals: true } }, orderBy: [{ name: asc }]) {
       ${PRODUCT_FIELDS} compatibleWith(where: { isPublished: { equals: true } }) { id slug name }
     }
     productCategories(orderBy: [{ sortOrder: asc }, { name: asc }]) { id name slug description }
   }`)
-  const products = (r?.products ?? []).map(p => ({ ...toProduct(p), fits: (p.compatibleWith ?? []).map((k: any) => k.slug) }))
+  const products = (r?.products ?? []).map(p => ({ ...toProduct(p), fitsSlugs: (p.compatibleWith ?? []).map((k: any) => k.slug as string) }))
   const used = new Set(products.map(p => p.category?.id).filter(Boolean))
   return { products, categories: (r?.productCategories ?? []).filter(c => used.has(c.id)).map(c => ({ id: c.id, name: c.name, slug: c.slug, description: c.description ?? '' })) }
 })
