@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { runCommand } from '../actions/commands';
 import { pillClass } from './ActionButton';
+import { toMinor } from '../lib/format';
 
 export type FormField =
-  | { name: string; label: string; kind?: 'text' | 'tel' | 'email' | 'date' | 'datetime-local' | 'password' | 'hidden'; required?: boolean; placeholder?: string; defaultValue?: string; width?: 'sm' | 'md' | 'lg' }
+  | { name: string; label: string; kind?: 'text' | 'tel' | 'email' | 'date' | 'datetime-local' | 'password' | 'hidden' | 'money' | 'number'; required?: boolean; placeholder?: string; defaultValue?: string; width?: 'sm' | 'md' | 'lg' }
   | { name: string; label: string; kind: 'select'; options: { value: string; label: string }[]; required?: boolean; defaultValue?: string; width?: 'sm' | 'md' | 'lg' };
 
 export const inputClass = 'h-9 w-full min-w-0 rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring';
@@ -79,6 +80,13 @@ export function CommandForm({ op, fields, fixed = {}, nest, rows, shape, submit,
         e.preventDefault();
         const form = new FormData(e.currentTarget);
         const values = Object.fromEntries(fields.map((f) => [f.name, String(form.get(f.name) ?? '').trim()]));
+        // Money is typed in major units and sent as integer minor units; numbers are sent as numbers.
+        for (const f of fields) {
+          if (!values[f.name] || (f.kind !== 'money' && f.kind !== 'number')) continue;
+          const n = f.kind === 'money' ? toMinor(values[f.name]) : Number(values[f.name]);
+          if (n === null || !Number.isFinite(n)) { setError(`${f.label}: enter a number.`); return; }
+          (values as Record<string, unknown>)[f.name] = n;
+        }
         const flat = rows ? Object.fromEntries(Object.entries(values).filter(([k]) => !Object.keys(rows).some(g => k.startsWith(`${g}.`)))) : values;
         const variables = { ...fixed, ...(shape ? shape(values) : nest ? nestValues(nest, values) : flat), ...(rows ? rowValues(rows, values) : {}) };
         const body = JSON.stringify(variables);
@@ -102,7 +110,7 @@ export function CommandForm({ op, fields, fixed = {}, nest, rows, shape, submit,
               {f.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           ) : (
-            <input name={f.name} type={f.kind ?? 'text'} required={f.required} placeholder={f.placeholder} defaultValue={f.defaultValue} className={inputClass} autoComplete="off" />
+            <input name={f.name} type={f.kind === 'money' ? 'text' : f.kind ?? 'text'} inputMode={f.kind === 'money' ? 'decimal' : undefined} step={f.kind === 'number' ? 'any' : undefined} required={f.required} placeholder={f.placeholder} defaultValue={f.defaultValue} className={inputClass} autoComplete="off" />
           )}
         </label>
       ))}
