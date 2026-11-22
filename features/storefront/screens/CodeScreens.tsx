@@ -94,6 +94,10 @@ export async function PayScreen({ code }: { code: string }) {
 
 export async function OrderView({ o, tz, prepEditable, backHref }: { o: any; tz: string; prepEditable: boolean; backHref?: string }) {
   const m = (v: number) => money(v, o.currencyCode)
+  // A reference waiting for staff to check covers the amount it was sent for; don't ask for it twice.
+  const waiting = o.payments.filter((p: any) => p.status === 'submitted').reduce((t: number, p: any) => t + p.amount, 0)
+  const providers = await gqlOrNull<{ paymentProviders: { code: string; name: string }[] }>('{ paymentProviders { code name } }')
+  const methodName = (c: string) => providers?.paymentProviders.find(p => p.code === c)?.name || word(c)
   return (
     <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
       <div className="space-y-6">
@@ -103,7 +107,9 @@ export async function OrderView({ o, tz, prepEditable, backHref }: { o: any; tz:
             {o.payLinks.map((p: any) => (
               <div key={p.code} className="flex flex-wrap items-center justify-between gap-3">
                 <span>{word(p.purpose)}: <strong>{m(p.amount)}</strong>{p.expiresAt ? <span className="text-[var(--muted)]"> by {date(p.expiresAt, tz)}</span> : null}</span>
-                <Link href={`/pay/${p.code}`} className="sf-btn sf-btn-sm">Pay now</Link>
+                {waiting >= p.amount
+                  ? <Link href={`/pay/${p.code}`} className="text-sm font-bold text-[var(--clay)] underline">We are checking your payment</Link>
+                  : <Link href={`/pay/${p.code}`} className="sf-btn sf-btn-sm">Pay now</Link>}
               </div>
             ))}
           </div>
@@ -177,7 +183,7 @@ export async function OrderView({ o, tz, prepEditable, backHref }: { o: any; tz:
           <div className="sf-card p-6">
             <h2 className="text-lg font-bold">Payments and receipts</h2>
             <ul className="mt-2 space-y-2 text-[0.95rem]">{o.payments.map((p: any, i: number) => (
-              <li key={i} className="flex flex-wrap justify-between gap-2"><span>{date(p.at, tz)} · {word(p.method)}{p.receiptNumber ? <span className="block text-sm text-[var(--muted)]">Receipt {p.receiptNumber}</span> : null}</span><span className="text-right">{m(p.amount)}<br /><Status value={p.status} /></span></li>
+              <li key={i} className="flex flex-wrap justify-between gap-2"><span>{date(p.at, tz)} · {methodName(p.method)}{p.reference ? <span className="font-mono text-sm"> {p.reference}</span> : null}{p.receiptNumber ? <span className="block text-sm text-[var(--muted)]">Receipt {p.receiptNumber}</span> : null}</span><span className="text-right">{m(p.amount)}<br /><Status value={p.status} /></span></li>
             ))}</ul>
           </div>
         )}
