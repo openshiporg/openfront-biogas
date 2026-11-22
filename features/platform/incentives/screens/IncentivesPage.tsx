@@ -49,7 +49,7 @@ export default async function IncentivesPage({ searchParams }: { searchParams: P
   const list = view.match.length ? apps.filter(a => (view.match as readonly string[]).includes(a.status)) : apps
   const count = (m: readonly string[]) => m.length ? apps.filter(a => m.includes(a.status)).length : apps.length
   const programs: any[] = d.incentivePrograms
-  const policy = d.companySettings?.incentiveRejectionPolicy === 'final_instalment' ? 'final_instalment' : 'absorb'
+  const policy = ['final_instalment', 'add_final_instalment'].includes(d.companySettings?.incentiveRejectionPolicy) ? 'final_instalment' : 'absorb'
   const sum = (m: string[]) => apps.filter(a => m.includes(a.status)).reduce((t, a) => t + a.amount, 0)
   const openable = d.orders.filter((o: any) => o.customer && programs.some(p => !o.incentiveApplications.some((a: any) => a.program?.id === p.id && a.status !== 'withdrawn')))
 
