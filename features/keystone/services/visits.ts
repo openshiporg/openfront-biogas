@@ -230,14 +230,14 @@ export type SurveyInput = { feasibility: string; measuredFeedKgPerDay?: string; 
  * P31: complete, or mark nobody home. Completion needs required checklist answers; a survey needs its
  * result; commissioning goes through commissionSystem (training and signature).
  */
-export async function completeVisit(uow: UnitOfWork, actor: Actor, input: { visitId: string; outcome?: 'completed' | 'no_access'; answers?: Answer[]; notes?: string; survey?: SurveyInput; signedName?: string; signature?: string; reading?: any; expectedVersion?: number | null }) {
+export async function completeVisit(uow: UnitOfWork, actor: Actor, input: { visitId: string; outcome?: 'completed' | 'no_access'; answers?: Answer[]; notes?: string; reason?: string; survey?: SurveyInput; signedName?: string; signature?: string; reading?: any; expectedVersion?: number | null }) {
   requirePermission(actor, 'canDoFieldWork', 'canManageVisits')
   const tx = uow.tx
   await onCrew(tx, actor, input.visitId)
   const visit = await lockRow<any>(tx, 'Visit', input.visitId)
   const outcome = input.outcome ?? 'completed'
   if (outcome === 'no_access') {
-    const v = await transition<any>(uow, { model: 'Visit', id: visit.id, from: ['scheduled', 'en_route', 'on_site'], to: 'no_access', expectedVersion: input.expectedVersion, actor, action: 'visit.no_access', reason: str(input.notes, 500) || 'Nobody home', data: { outcome: 'no_access', notes: str(input.notes, 2000), checkOutAt: uow.now } })
+    const v = await transition<any>(uow, { model: 'Visit', id: visit.id, from: ['scheduled', 'en_route', 'on_site'], to: 'no_access', expectedVersion: input.expectedVersion, actor, action: 'visit.no_access', reason: str(input.notes || input.reason, 500) || 'Nobody home', data: { outcome: 'no_access', notes: str(input.notes || input.reason, 2000), checkOutAt: uow.now } })
     await freeSlots(tx, visit.id)
     return v
   }

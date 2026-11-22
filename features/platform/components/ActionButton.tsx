@@ -19,7 +19,7 @@ const newKey = (op: string) => `${op}:${crypto.randomUUID()}`;
  */
 export function ActionButton({ op, vars, children, paths, confirm, ask, choices, onDone, className }: {
   op: string; vars: Record<string, unknown>; children: React.ReactNode; paths?: string[]; confirm?: string;
-  /** Prompt for a reason; the answer goes in vars.reason. */
+  /** Prompt for a reason; the answer goes in vars.reason (vars.input.reason when the op takes an input object). */
   ask?: string;
   /** Pick a reason from a list instead of typing one; the chosen value goes in vars.reason. */
   choices?: { value: string; label: string }[];
@@ -34,7 +34,9 @@ export function ActionButton({ op, vars, children, paths, confirm, ask, choices,
 
   function run(reason: string | undefined) {
     setError('');
-    const variables = reason !== undefined ? { ...vars, reason } : vars;
+    // Operations that take one input object get the reason inside it.
+    const nested = vars.input && typeof vars.input === 'object' && !Array.isArray(vars.input);
+    const variables = reason === undefined ? vars : nested ? { ...vars, input: { ...(vars.input as Record<string, unknown>), reason } } : { ...vars, reason };
     const body = JSON.stringify(variables);
     // Same intent, same key; a changed reason or target is a new intent.
     if (key.current?.body !== body) key.current = { key: newKey(op), body };

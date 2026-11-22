@@ -103,6 +103,10 @@ test('form errors show Keystone validation text, never Prisma, stack or GraphQL 
   'You provided invalid data for this operation.\nPassword must be at least 10 characters long');
   assert.equal(of({ message: 'Prisma error: Unique constraint failed on the fields: (`email`)', extensions: { code: 'KS_PRISMA_ERROR' } }),
     'A record with this email already exists.');
+  // Named operations' domain errors are written for staff: stale versions, guards, capacity.
+  assert.equal(of({ message: 'This was changed by someone else. Reload and try again.', extensions: { code: 'STALE_STATE', currentVersion: 3 } }),
+    'This was changed by someone else. Reload and try again.');
+  assert.equal(of({ message: 'Record the warranty decision first.', extensions: { code: 'GUARD_FAILED' } }), 'Record the warranty decision first.');
   for (const leak of [
     { message: 'Prisma error: \nInvalid `prisma.user.create()` invocation: secret', extensions: { code: 'KS_PRISMA_ERROR' } },
     { message: 'An error occurred while running "resolveInput".\n  - Order.hooks: Invalid `prisma.order.update()` invocation', extensions: { code: 'KS_EXTENSION_ERROR' } },
