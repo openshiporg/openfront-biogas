@@ -11,7 +11,7 @@ export type FormField =
   | { name: string; label: string; kind?: 'text' | 'tel' | 'email' | 'date' | 'datetime-local' | 'password' | 'hidden' | 'money' | 'number'; required?: boolean; placeholder?: string; defaultValue?: string; width?: 'sm' | 'md' | 'lg' }
   | { name: string; label: string; kind: 'select'; options: { value: string; label: string }[]; required?: boolean; defaultValue?: string; width?: 'sm' | 'md' | 'lg' }
   /** A Yes/No select sent as a real boolean. */
-  | { name: string; label: string; kind: 'boolean'; required?: boolean; defaultValue?: 'true' | 'false'; width?: 'sm' | 'md' | 'lg' };
+  | { name: string; label: string; kind: 'boolean'; required?: boolean; placeholder?: string; defaultValue?: 'true' | 'false'; width?: 'sm' | 'md' | 'lg' };
 
 export const inputClass = 'h-9 w-full min-w-0 rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
