@@ -156,11 +156,16 @@ export async function getAuthenticatedUser() {
           id
           email
           name
+          onboardingStatus
           role {
-            canAccessDashboard
+            canAccessDashboard canManageSettings canManageUsers canManageOnboarding canManageCatalog canManageInventory canManageLeads
+            canSeeAllLeads canManageQuotes canApproveDiscounts canManageOrders canManageVisits canDoFieldWork canManageSystems canManageTickets
+            canManagePlans canReadPayments canManagePayments canIssueRefunds canManageIncentives canManageCommissions canReadReports
           }
         }
       }
+      leadsCount
+      companySettings { name }
     }
   `;
 

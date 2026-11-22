@@ -38,7 +38,7 @@ export class UnitOfWork {
 
 export type Committed<T> = { value: T; webhookEventIds: string[]; afterCommit: ((db: Db) => Promise<unknown>)[] }
 
-export async function runInTransaction<T>(db: Db, work: (uow: UnitOfWork) => Promise<T>, options: { now?: Date } = {}): Promise<Committed<T>> {
+export async function runInTransaction<T>(db: Db, work: (uow: UnitOfWork) => Promise<T>, options: { now?: Date; timeoutMs?: number } = {}): Promise<Committed<T>> {
   return db.$transaction(async tx => {
     const uow = new UnitOfWork(tx, options.now ?? new Date())
     const value = await work(uow)
@@ -61,5 +61,5 @@ export async function runInTransaction<T>(db: Db, work: (uow: UnitOfWork) => Pro
     const { recordWebhookEvents } = await import('../../webhooks/outbound')
     const webhookEventIds = await recordWebhookEvents(tx, uow.webhooks, uow.now)
     return { value, webhookEventIds, afterCommit: uow.afterCommit }
-  }, TRANSACTION_OPTIONS)
+  }, options.timeoutMs ? { ...TRANSACTION_OPTIONS, timeout: options.timeoutMs } : TRANSACTION_OPTIONS)
 }

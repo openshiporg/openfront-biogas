@@ -36,9 +36,9 @@ export const anyone = (context: Ctx, guestKey: string) => actorOrGuest(context.s
 type Keyed = { idempotencyKey?: string | null }
 
 /** Run one idempotent command; the receipt is keyed by the caller's key and fingerprinted on the other args. */
-export async function run<A extends Keyed, T>(context: Ctx, name: string, actor: Actor, args: A, work: (uow: UnitOfWork) => Promise<T>, now?: Date): Promise<T> {
+export async function run<A extends Keyed, T>(context: Ctx, name: string, actor: Actor, args: A, work: (uow: UnitOfWork) => Promise<T>, now?: Date, timeoutMs?: number): Promise<T> {
   const { idempotencyKey, ...params } = args
-  const result = await command(context.prisma, { name, actor, idempotencyKey: String(idempotencyKey ?? ''), params, now }, work)
+  const result = await command(context.prisma, { name, actor, idempotencyKey: String(idempotencyKey ?? ''), params, now, timeoutMs }, work)
   return result.value
 }
 

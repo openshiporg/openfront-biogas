@@ -45,11 +45,17 @@ export async function transition<Row extends Record<string, unknown>>(uow: UnitO
   }
   if (spec.guard) await spec.guard(row)
   const extra = typeof spec.data === 'function' ? await spec.data(row) : spec.data ?? {}
+  // updateMany cannot write relations; nested writes ({ set }, { connect }) go in a second update on
+  // the row this transaction already holds locked, after the compare-and-set has won.
+  const isNested = (v: unknown) => Boolean(v) && typeof v === 'object' && !(v instanceof Date) && !Array.isArray(v) && ['set', 'connect', 'disconnect', 'create'].some(k => k in (v as object))
+  const scalar = Object.fromEntries(Object.entries(extra).filter(([, v]) => !isNested(v)))
+  const nested = Object.fromEntries(Object.entries(extra).filter(([, v]) => isNested(v)))
   const result = await delegateOf(uow.tx, spec.model).updateMany({
     where: { id: spec.id, [vf]: currentVersion, status: currentStatus },
-    data: { ...extra, status: spec.to, [vf]: { increment: 1 } },
+    data: { ...scalar, status: spec.to, [vf]: { increment: 1 } },
   })
   if (result.count !== 1) throw new DomainError(Codes.STALE_STATE, 'This was changed by someone else. Reload and try again.', { currentStatus, currentVersion })
+  if (Object.keys(nested).length) await (delegateOf(uow.tx, spec.model) as unknown as { update(a: unknown): Promise<unknown> }).update({ where: { id: spec.id }, data: nested })
   uow.audit({
     action: spec.action,
     entityType: spec.model,

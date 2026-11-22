@@ -5,7 +5,7 @@ import { claimReceipt, writeReceipt } from './idempotency'
 import { runInTransaction, type UnitOfWork } from './unitOfWork'
 import { deliverWebhookEvents } from '../../webhooks/outbound'
 
-export type CommandSpec = { name: string; actor: Actor; idempotencyKey: string; params: unknown; now?: Date }
+export type CommandSpec = { name: string; actor: Actor; idempotencyKey: string; params: unknown; now?: Date; /** Long one-off commands (onboarding) may hold their transaction longer. */ timeoutMs?: number }
 export type CommandResult<T> = { replay: boolean; value: T }
 
 const RETRYABLE = /deadlock detected|could not serialize|P2034|40P01|40001/i
@@ -24,7 +24,7 @@ export async function command<T>(db: Db, spec: CommandSpec, work: (uow: UnitOfWo
         const value = toJsonValue<T>(await work(uow))
         await writeReceipt(uow.tx, { key: spec.idempotencyKey, operation: spec.name, principal, params: spec.params, result: value, now: uow.now })
         return { replay: false, value }
-      }, { now: spec.now })
+      }, { now: spec.now, timeoutMs: spec.timeoutMs })
       await runAfterCommit(db, committed)
       return committed.value
     } catch (error) {

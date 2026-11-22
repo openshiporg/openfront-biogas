@@ -46,13 +46,14 @@ These are filtered to published rows for guests:
 - **Stock for S9:** read `stockLevels { onHand reserved }`, or rely on `activeCart.lines[].available`.
 
 ### `sizeSystem(input: JSON!)` (mutation, public; S4)
-Input fields, all optional:
-- `animals { cattle, pigs, poultry, other }` (counts)
+Input fields:
+- `cattle, pigs, poultry` (head counts)
 - `kitchenWasteKgPerDay`
-- `people`
-- `currentFuel`
+- `people` (who eat from the kitchen)
 - `monthlyFuelSpendAmount` (minor units)
-- `interest`
+- `interest` (`home | farm | institution`)
+
+At least one animal count or the kitchen waste is required.
 
 Returns:
 - `assessmentId`
@@ -61,7 +62,7 @@ Returns:
 - `recommended { id, name, slug, priceAmount, installFeeAmount, currencyCode, capacityM3, dailyGasM3 } | null`
 - `note`
 
-Pass `assessmentId` to `submitQuoteRequest` to attach it.
+Pass `assessmentId` to `submitQuoteRequest`.
 
 ## Quote request and survey (S5)
 

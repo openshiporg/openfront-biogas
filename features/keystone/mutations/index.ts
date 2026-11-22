@@ -3,6 +3,7 @@ import type { GraphQLSchema } from 'graphql'
 import redirectToInit from './redirectToInit'
 import { storefrontResolvers, storefrontTypeDefs } from './storefront'
 import { staffResolvers, staffTypeDefs } from './staff'
+import { onboardingResolvers, onboardingTypeDefs } from './onboarding'
 
 const graphql = String.raw
 
@@ -21,7 +22,7 @@ export function extendGraphqlSchema(baseSchema: GraphQLSchema) {
   })
   return mergeSchemas({
     schemas: [core],
-    typeDefs: [storefrontTypeDefs, staffTypeDefs],
-    resolvers: [storefrontResolvers, staffResolvers] as never,
+    typeDefs: [storefrontTypeDefs, staffTypeDefs, onboardingTypeDefs],
+    resolvers: [storefrontResolvers, staffResolvers, onboardingResolvers] as never,
   })
 }

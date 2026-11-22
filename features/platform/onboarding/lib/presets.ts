@@ -57,7 +57,7 @@ const kits = (k: number, install: number): Kit[] => [
 const inst = (k: number, install: number): Kit => ({ sku: 'KC-20', name: 'KitchenCycle 20 (institutional)', m3: 20, tech: 'container', price: 18900 * k, install: Math.round(install * 5), gas: 6, hours: 16, people: 300, feedMin: 100, feedMax: 200, cattle: 0, reactorWarranty: 120, surveyKind: 'survey_kitchen', requiresSurvey: true, sellOnline: false })
 
 const SERVICE = (k: number) => [
-  { slug: 'care', name: 'Care', price: 89 * k, visits: 1, discount: '10', priority: false, items: ['One maintenance visit a year', '10% off parts', 'Gas-line pressure test'] },
+  { slug: 'care', name: 'Care', price: 89 * k, visits: 1, discount: '10', priority: false, items: ['One maintenance visit a year', '10% off parts', 'Gas-line leak check'] },
   { slug: 'care-plus', name: 'Care Plus', price: 169 * k, visits: 2, discount: '15', priority: true, items: ['Two maintenance visits a year', 'Priority response', '15% off parts', 'Free H₂S filter media'] },
 ]
 
