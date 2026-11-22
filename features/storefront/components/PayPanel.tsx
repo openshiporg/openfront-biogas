@@ -42,7 +42,7 @@ export function PayPanel({ code, amount, currencyCode, methods, email }: { code:
       <div className="sf-card p-5">
         <p className="font-bold text-[var(--forest)]">How to pay</p>
         {methods.map(m => m.instructions ? <p key={m.code} className="mt-2 whitespace-pre-line"><strong>{m.label}:</strong> {m.instructions}</p> : null)}
-        <p className="mt-2">Pay at any branch and our team will record it. Quote reference <strong>{code}</strong>.</p>
+        <p className="mt-2">Pay at any branch and our team will record it. Give them the reference <strong>{code}</strong>.</p>
       </div>
     )
   }
@@ -150,13 +150,13 @@ function ReferencePay({ code, method, amount, currencyCode }: { code: string; me
       }}
     >
       <div className="rounded-[14px] bg-[var(--sage)] p-4">
-        <p className="font-bold text-[var(--forest)]">Send {money(amount, currencyCode)} by {method.label.toLowerCase()}</p>
+        <p className="font-bold text-[var(--forest)]">Send {money(amount, currencyCode)} by {method.label}</p>
         {method.instructions ? <p className="mt-1 whitespace-pre-line">{method.instructions}</p> : null}
         <p className="mt-2">Use <strong className="font-mono">{code}</strong> as the payment reference if you can.</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="ref" className="sf-label">{method.code === 'mobile_money' ? 'Transaction ID from your message' : 'Transfer reference'}</label>
+          <label htmlFor="ref" className="sf-label">{method.code === 'bank_transfer' ? 'Transfer reference' : 'Transaction ID or reference'}</label>
           <input id="ref" value={ref} onChange={e => setRef(e.target.value)} className="sf-input font-mono" autoComplete="off" />
         </div>
         {method.code === 'mobile_money' && (

@@ -78,7 +78,7 @@ export async function PayScreen({ code }: { code: string }) {
           {s.payments.length > 0 && (
             <>
               <h3 className="mt-5 font-bold">Payments</h3>
-              <ul className="mt-2 space-y-1 text-[0.95rem]">{s.payments.map((p: any, i: number) => <li key={i} className="flex justify-between gap-2"><span>{word(p.method)} {p.reference ? <span className="font-mono text-sm">{p.reference}</span> : null}</span><Status value={p.status} /></li>)}</ul>
+              <ul className="mt-2 space-y-1 text-[0.95rem]">{s.payments.map((p: any, i: number) => <li key={i} className="flex justify-between gap-2"><span>{s.methods.find((m: any) => m.code === p.method)?.label ?? word(p.method)} {p.reference ? <span className="font-mono text-sm">{p.reference}</span> : null}</span><Status value={p.status} /></li>)}</ul>
             </>
           )}
         </aside>
