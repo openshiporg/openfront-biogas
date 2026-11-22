@@ -5,6 +5,8 @@ import { ActionButton } from '../../components/ActionButton'
 import { CommandForm } from '../../components/CommandForm'
 import { ChangeForm } from './ChangeForm'
 import { ReturnForm } from './ReturnForm'
+import { cancellationRefund } from '@/features/keystone/services/orders'
+import { requestTime } from '../../lib/server'
 
 /**
  * P15 change a confirmed order (propose, approve with the extra to pay or the credit applied, reject); P17 take back
@@ -17,15 +19,15 @@ export async function OrderExtras({ orderId }: { orderId: string }) {
   const paths = [path, '/dashboard/platform/orders']
   const d = await q<any>(`query($id: ID!) {
     order(where: { id: $id }) {
-      id number status currencyCode deliveredAt paidAmount refundedAmount
-      lines { id kind name quantity returnedQuantity unitAmount product { id } }
+      id number status currencyCode deliveredAt paidAmount refundedAmount confirmedAt pickedAt deliveryAmount surveyFeeCreditAmount
+      lines { id kind name quantity returnedQuantity unitAmount totalAmount taxAmount snapshot product { id } }
       changes(orderBy: [{ createdAt: desc }]) { id status version description differenceAmount createdAt createdBy { name } }
       invoices(orderBy: [{ issuedAt: desc }]) { id number status version issuedAt dueAt totalAmount installment { label } }
       plan { installments(orderBy: [{ sequence: asc }]) { id label amount status invoice { id status } } }
     }
     products(where: { isPublished: { equals: true }, type: { not: { equals: "service" } } }, orderBy: [{ name: asc }]) { id name priceAmount currencyCode }
     stockLocations(where: { isActive: { equals: true } }, orderBy: [{ name: asc }]) { id name type }
-    companySettings { returnWindowDays restockingFeePercent }
+    companySettings { returnWindowDays restockingFeePercent coolingOffDays }
   }`, { id: orderId }).catch(() => null)
   const o = d?.order
   if (!o) return null
@@ -38,10 +40,26 @@ export async function OrderExtras({ orderId }: { orderId: string }) {
   const windowDays = d.companySettings?.returnWindowDays ?? 30
   const windowEnds = o.deliveredAt ? new Date(new Date(o.deliveredAt).getTime() + windowDays * 86400000) : null
   const canReturn = ['delivered', 'completed', 'closed'].includes(o.status) && (!windowEnds || windowEnds > new Date())
+  const now = new Date(requestTime())
+  const asOrder = { ...o, confirmedAt: o.confirmedAt ? new Date(o.confirmedAt) : null, pickedAt: o.pickedAt ? new Date(o.pickedAt) : null }
+  const policy = { coolingOffDays: d.companySettings?.coolingOffDays ?? 3, restockingFeePercent: d.companySettings?.restockingFeePercent ?? '10' } as any
+  const cancelCases = o.status === 'cancelled' ? [] : [
+    { who: 'If the customer cancels now', r: cancellationRefund(asOrder, policy, now) },
+    ...(o.status === 'delivered' ? [{ who: 'If the kit comes back unopened', r: cancellationRefund(asOrder, policy, now, { kitReturned: true }) }] : []),
+    { who: 'If we cancel', r: cancellationRefund(asOrder, policy, now, { byCompany: true }) },
+  ]
   const uninvoiced = (o.plan?.installments ?? []).filter((i: any) => !i.invoice || i.invoice.status === 'void')
 
   return (
     <>
+      {cancelCases.length && (canOrders || canRefund) ? (
+        <Section title="Refund if cancelled">
+          {cancelCases.map(c => (
+            <Row key={c.who}><span>{c.who}</span><Meta>{c.r.rule}</Meta><span className="font-mono text-sm">{c.r.allowed ? `${money(c.r.refundAmount, cur)} back${c.r.keepAmount ? `, ${money(c.r.keepAmount, cur)} kept` : ''}` : 'not allowed'}</span></Row>
+          ))}
+        </Section>
+      ) : null}
+
       <Section title={`Changes · ${o.changes.length}`}>
         {o.changes.map((c: any) => (
           <Row key={c.id}>
