@@ -55,10 +55,12 @@ async function main() {
   const dispatcher = new Client('dispatcher')
   const finance = new Client('finance')
   const care = new Client('customer care')
+  const store = new Client('storekeeper')
   const salesId = await sales.signIn(`grace.alvarez@${DOMAIN}`, PASSWORD)
   await dispatcher.signIn(`tom.brooks@${DOMAIN}`, PASSWORD)
   await finance.signIn(`ben.carter@${DOMAIN}`, PASSWORD)
   await care.signIn(`david.whitfield@${DOMAIN}`, PASSWORD)
+  await store.signIn(`karen.delgado@${DOMAIN}`, PASSWORD)
   // Every field technician signs in; each visit is worked by whoever is on its crew.
   const crew = new Map<string, Client>()
   for (const name of ['hannah.lindqvist', 'linda.okafor', 'marcus.kowalski']) {
@@ -76,9 +78,11 @@ async function main() {
   const slot = slots.slots.find((s: any) => s.free > 0)
   if (!slot) throw new Error('No free survey slot in the next 14 days.')
   const email = `main.action.${stamp}@example.net`
+  // Same phone or email is the same customer, so each run brings its own number.
+  const phone = `+1512555${String(Date.now()).slice(-4)}`
   const asked: any = await one(visitor, 'submitQuoteRequest', `mutation($i: JSON!, $k: String!) { submitQuoteRequest(input: $i, idempotencyKey: $k) }`, {
     k: key('quote-request'),
-    i: { name: `Rosa Main ${stamp}`, email, phone: '+15125550188', customerType: 'household', interest: 'home', addressLine: '410 Ranch Rd', city: 'Buda', region: 'Texas', country: 'US', postcode: '78610', siteType: 'home', animals: { cattle: 3 }, peopleServed: 5, monthlyFuelSpendAmount: 6500, assessmentId: sized.assessmentId, contactConsent: true, survey: { date: slot.date, slotIndex: slot.slotIndex } },
+    i: { name: `Rosa Main ${stamp}`, email, phone, customerType: 'household', interest: 'home', addressLine: '410 Ranch Rd', city: 'Buda', region: 'Texas', country: 'US', postcode: '78610', siteType: 'home', animals: { cattle: 3 }, peopleServed: 5, monthlyFuelSpendAmount: 6500, assessmentId: sized.assessmentId, contactConsent: true, survey: { date: slot.date, slotIndex: slot.slotIndex } },
   })
   if (!asked.survey?.visitCode) throw new Error('The survey was not booked.')
   note('1b ask for a quote and book a survey', `lead ${asked.leadNumber}, survey /visit/${asked.survey.visitCode} on ${slot.date}`)
@@ -165,8 +169,8 @@ async function main() {
   if (firstTask) await customer.gql(`mutation($t: ID!, $k: String!) { completeSitePrepTask(taskId: $t, done: true, note: "Done", idempotencyKey: $k) }`, { t: firstTask.id, k: key('prep-customer') })
   for (const t of rest) await dispatcher.gql(`mutation($t: ID!, $k: String!) { setSitePrepTask(taskId: $t, status: "done", note: "Confirmed by phone", idempotencyKey: $k) }`, { t: t.id, k: key('prep-staff') })
   note('4a site prep ticked', `${inst.number}: ${inst.prepTasks.length} items (first by the customer)`)
-  const serial: any = (await dispatcher.gql(`query($p: ID!) { serializedUnits(where: { product: { id: { equals: $p } }, status: { equals: "in_stock" } }, take: 1) { serialNumber } }`, { p: kits[0].id })).serializedUnits[0]
-  for (const step of ['pick', 'pack', 'out_for_install']) await dispatcher.gql(`mutation($i: JSON!, $k: String!) { fulfilOrder(input: $i, idempotencyKey: $k) }`, { k: key(`fulfil-${step}`), i: { orderId: afterDeposit.id, step, ...(step === 'pick' && serial ? { serialNumbers: [serial.serialNumber] } : {}) } })
+  const serial: any = (await store.gql(`query($p: ID!) { serializedUnits(where: { product: { id: { equals: $p } }, status: { equals: "in_stock" } }, take: 1) { serialNumber } }`, { p: kits[0].id })).serializedUnits[0]
+  for (const step of ['pick', 'pack', 'out_for_install']) await store.gql(`mutation($i: JSON!, $k: String!) { fulfilOrder(input: $i, idempotencyKey: $k) }`, { k: key(`fulfil-${step}`), i: { orderId: afterDeposit.id, step, ...(step === 'pick' && serial ? { serialNumbers: [serial.serialNumber] } : {}) } })
   const staffSlots: any[] = await one(dispatcher, 'staffVisitSlots', `query($f: String!) { staffVisitSlots(from: $f, days: 14, technicianId: "${techId}") }`, { f: new Date().toISOString().slice(0, 10) })
   const installSlot = staffSlots.find((s: any) => s.technicianIds?.includes(techId)) ?? staffSlots[0]
   const installVisit: any = await one(dispatcher, 'scheduleVisit', `mutation($i: JSON!, $k: String!) { scheduleVisit(input: $i, idempotencyKey: $k) }`, { k: key('schedule-install'), i: { type: 'install', date: installSlot.date, slotIndex: installSlot.slotIndex, technicianIds: [techId], installationId: instRow.id } })

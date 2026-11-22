@@ -39,6 +39,13 @@ describe.skipIf(!hasTestDatabase)('registerCustomer (S19): linking to an existin
     await expect(register({ name: 'Ana', email: 'ana@example.net', password: 'another pass 2' })).rejects.toThrow(ACCOUNT_EXISTS)
   })
 
+  it('links by code alone when the email and phone are new (quote asked for under another address)', async () => {
+    const out = await register({ name: 'Ben C', email: 'ben.new@example.net', password: 'correct horse 1', code: 'O-BEN1-BEN1-BEN1-BEN1' })
+    expect(out.customerId).toBe(other.id)
+    expect((await prisma.customer.findUnique({ where: { id: other.id } }))?.email).toBe('ben.new@example.net')
+    await expect(register({ name: 'Ben C', email: 'ben.third@example.net', password: 'correct horse 1', code: 'O-BEN1-BEN1-BEN1-BEN1' })).rejects.toThrow(ACCOUNT_EXISTS)
+  })
+
   it('creates a new customer when nothing matches', async () => {
     const out = await register({ name: 'Carla Diaz', email: 'carla@example.net', phone: '+15125550199', password: 'correct horse 1' })
     const cu = await prisma.customer.findUnique({ where: { id: out.customerId } })

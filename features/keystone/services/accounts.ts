@@ -41,7 +41,12 @@ export async function registerCustomer(uow: UnitOfWork, actor: Actor, raw: { nam
   const existingUser = await tx.user.findFirst({ where: { email: { equals: email, mode: 'insensitive' } }, select: { id: true } })
   if (existingUser) throw new DomainError(Codes.GUARD_FAILED, ACCOUNT_EXISTS)
 
-  const matches = await tx.customer.findMany({ where: { OR: [{ email }, ...(phone ? [{ phone }] : [])] }, select: { id: true, userId: true } })
+  const found = await tx.customer.findMany({ where: { OR: [{ email }, ...(phone ? [{ phone }] : [])] }, select: { id: true, userId: true } })
+  // Nothing on file under this email or phone, but they hold the code of a record: that code proves
+  // who they are (a quote asked for under another email), so they get that customer, not an empty one.
+  const owner = found.length ? null : await codeOwner(tx, raw.code ?? '')
+  const holder = owner ? await tx.customer.findUnique({ where: { id: owner }, select: { id: true, userId: true } }) : null
+  const matches = holder ? [holder] : found
   let customerId: string
   if (matches.length) {
     const owner = await codeOwner(tx, raw.code ?? '')
