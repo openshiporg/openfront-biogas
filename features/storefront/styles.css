@@ -1,0 +1,66 @@
+/* Terracotta: cream page, clay buttons, forest-green type and footer, sage panels. Colours picked from the chosen design. */
+.sf {
+  --cream: #f9f7f0;
+  --cream-2: #f3efe5;
+  --card: #f0ece1;
+  --sage: #e9eddb;
+  --sage-2: #dfe6cc;
+  --clay: #b04418;
+  --clay-hover: #963813;
+  --clay-soft: #f6e3d8;
+  --band: #b55229;
+  --forest: #123316;
+  --forest-2: #1f4a23;
+  --footer: #1c361c;
+  --ink: #3f3f39;
+  --muted: #6b6a60;
+  --line: #e4dccd;
+  --lime: #d4df8a;
+  --leaf: #5f901c;
+  --bark: #745a46;
+  --bad: #a3321b;
+  --good: #3c6e1f;
+  background: var(--cream);
+  color: var(--ink);
+  color-scheme: light;
+}
+
+.sf h1, .sf h2, .sf h3, .sf h4 { font-family: var(--font-sf-head), var(--font-sf), system-ui, sans-serif; color: var(--forest); letter-spacing: -0.01em; }
+.sf ::selection { background: var(--lime); }
+.sf :focus-visible { outline: 3px solid var(--clay); outline-offset: 2px; }
+
+.sf-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  min-height: 46px; padding: 0 1.5rem; border-radius: 999px; font-weight: 700; font-size: 1rem;
+  background: var(--clay); color: #fff; transition: background 0.15s ease, transform 0.15s ease; white-space: nowrap;
+}
+.sf-btn:hover { background: var(--clay-hover); }
+.sf-btn:active { transform: translateY(1px); }
+.sf-btn[disabled], .sf-btn[aria-disabled='true'] { opacity: 0.55; cursor: not-allowed; }
+.sf-btn-ghost { background: transparent; color: var(--forest); border: 1.5px solid var(--forest); }
+.sf-btn-ghost:hover { background: var(--sage); }
+.sf-btn-white { background: var(--cream); color: var(--forest); }
+.sf-btn-white:hover { background: #fff; }
+.sf-btn-sm { min-height: 44px; padding: 0 1.1rem; font-size: 0.95rem; }
+
+.sf-input, .sf select.sf-input, .sf textarea.sf-input {
+  width: 100%; min-height: 46px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; color: var(--ink);
+  padding: 0.6rem 0.9rem; font-size: 1rem;
+}
+.sf textarea.sf-input { min-height: 96px; }
+.sf-input:focus { border-color: var(--clay); outline: none; box-shadow: 0 0 0 3px var(--clay-soft); }
+.sf-label { display: block; font-weight: 700; color: var(--forest); font-size: 0.95rem; margin-bottom: 0.35rem; }
+.sf-help { font-size: 0.85rem; color: var(--muted); margin-top: 0.3rem; }
+
+.sf-card { background: #fffdf8; border: 1px solid var(--line); border-radius: 20px; }
+.sf-panel { background: var(--sage); border-radius: 20px; }
+.sf-chip { display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 999px; padding: 0.2rem 0.75rem; font-size: 0.8rem; font-weight: 700; }
+
+.sf-rule { display: flex; align-items: center; gap: 1.5rem; }
+.sf-rule::before, .sf-rule::after { content: ''; flex: 1; height: 1px; background: #d9b9a4; }
+
+.sf-prose p { margin: 0 0 0.9rem; line-height: 1.65; }
+
+@media (max-width: 640px) {
+  .sf-rule::before, .sf-rule::after { display: none; }
+}
