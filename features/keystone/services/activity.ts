@@ -1,7 +1,7 @@
 import type { Db } from '../lib/db'
 import { runInTransaction, type UnitOfWork } from '../lib/unitOfWork'
 import { systemActor, type Actor } from '../lib/actor'
-import { addDays } from '../lib/time'
+import { addDays, addMonths } from '../lib/time'
 import { PRESETS, type CountryCode } from '../../platform/onboarding/lib/presets'
 import { createLeadCore, logContact, transitionLead } from './leads'
 import { saveQuoteDraft, sendQuote, acceptQuote } from './quotes'
@@ -196,7 +196,8 @@ export async function seedActivity(db: Db, country: CountryCode) {
   }
   if (plans[0]) {
     const rows = plans[0].installments.filter(r => r.sequence > 0)
-    if (rows[0]) await db.installment.update({ where: { id: rows[0].id }, data: { dueDate: addDays(new Date(), 2) } })
+    // Instalment 1 due in two days; the rest keep their monthly spacing from it.
+    for (const [n, r] of rows.entries()) await db.installment.update({ where: { id: r.id }, data: { dueDate: addMonths(addDays(new Date(), 2), n) } })
   }
   add('activePlans', plans.length)
 

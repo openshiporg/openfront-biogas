@@ -255,8 +255,9 @@ export async function acceptQuote(uow: UnitOfWork, actor: Actor, input: { code: 
       if (input.planOfferId) {
         offer = option.planOffers.find((p: any) => p.id === input.planOfferId)
         if (!offer) throw new DomainError(Codes.INVALID_INPUT, 'Pick a payment plan offered for this option.')
-      } else if (option.planOffers.length) {
-        offer = [...option.planOffers].sort((a: any, b: any) => (a.instalmentCount ?? 0) - (b.instalmentCount ?? 0))[0]
+      } else {
+        // No plan picked means paying in full: the full-payment offer when the option lists one, never an instalment plan.
+        offer = option.planOffers.find((p: any) => (p.instalmentCount ?? 0) === 0 && (p.depositAmount ?? 0) >= (p.totalAmount ?? 0)) ?? null
       }
     },
     data: { signedName, signedAt: uow.now, signedIp: str(input.ip, 64), acceptedOptionId: input.optionId, acceptedPlanOfferId: input.planOfferId ?? null },
