@@ -279,7 +279,11 @@ describe.skipIf(!hasTestDatabase)('§11 money, care and isolation', () => {
       const ticket = await op(await as(ids.care), `mutation($i: JSON!, $k: String!) { staffCreateTicket(input: $i, idempotencyKey: $k) }`, { k: key('t'), i: { systemId, category: 'other', description: 'Noise from the inlet' } })
       expect(await op(bCtx, `query($id: ID!) { myOrder(id: $id) }`, { id: a.orderId })).toBeNull()
       expect(await op(bCtx, `query($id: ID!) { mySystem(id: $id) }`, { id: systemId })).toBeNull()
-      await expect(op(bCtx, `query($id: ID!) { myTicket(id: $id) }`, { id: ticket.id })).rejects.toThrow(/NOT_FOUND/).catch(async () => expect(await op(bCtx, `query($id: ID!) { myTicket(id: $id) }`, { id: ticket.id })).toBeNull())
+      const otherTicket = await op(bCtx, `query($id: ID!) { myTicket(id: $id) }`, { id: ticket.id }).catch((error: Error) => {
+        if (/NOT_FOUND/.test(error.message)) return null
+        throw error
+      })
+      expect(otherTicket).toBeNull()
       const mine = await op(bCtx, `{ myOrders }`)
       expect(JSON.stringify(mine)).not.toContain(a.orderId)
       expect(JSON.stringify(await op(bCtx, `{ mySystems }`))).not.toContain(systemId)
