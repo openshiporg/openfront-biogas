@@ -4,7 +4,10 @@
  * Real database (the `vitest` schema), real services and GraphQL operations; nothing is stubbed.
  */
 import crypto from 'node:crypto'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+
+// The scratch database is remote (about 0.1 s a query): whole sales take minutes, whatever the global config says.
+vi.setConfig({ testTimeout: 900_000, hookTimeout: 900_000 })
 import { hasTestDatabase, testPrisma } from '../helpers/db'
 import { guest, onboardCompany, race, run } from '../helpers/company'
 import { acceptFor, as, commissionedSystem, confirmedOrder, key, op, payByReference, reference, requestQuote, sendQuoteFor, staffIds } from '../helpers/flow'
