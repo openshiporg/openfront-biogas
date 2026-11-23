@@ -7,6 +7,7 @@ import { ActionButton } from '../../components/ActionButton'
 import { CommandForm } from '../../components/CommandForm'
 import { Checklist, CompleteVisit, TakePayment, type Item } from '../components/FieldTools'
 import { CheckIn } from '../components/CheckIn'
+import { VisitPhotos } from '../components/VisitPhotos'
 
 /**
  * P25 travel and check in (with location), P26 checklist, P27 complete with signature, P28 parts from the van,
@@ -26,6 +27,7 @@ export default async function FieldVisitPage({ params }: { params: Promise<{ id:
       survey { feasibility notes } training { traineeName topics }
       partsUsed { id quantity chargeable unitAmount product { name } }
       readings(orderBy: [{ at: desc }], take: 3) { at working pressureKpa cookingHours problem }
+      media(where: { kind: { equals: "photo" } }, orderBy: [{ takenAt: desc }], take: 50) { id caption image { url } }
     }
   }`, { id })
   const v = d.visit
@@ -96,6 +98,11 @@ export default async function FieldVisitPage({ params }: { params: Promise<{ id:
           {!open || v.type === 'commissioning' ? null : v.status !== 'on_site' ? <Meta>Check in to start; you can fill it in on the way.</Meta> : null}
         </Section>
       ) : null}
+
+      <Section title="Photos">
+        {v.media.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{v.media.map((photo: any) => photo.image?.url ? <a key={photo.id} href={photo.image.url} target="_blank" rel="noreferrer" className="space-y-1 text-xs underline"><img src={photo.image.url} alt={photo.caption || 'Visit photo'} className="aspect-square w-full rounded object-cover" /><span>{photo.caption || 'Open photo'}</span></a> : null)}</div> : <Empty>No photos attached yet.</Empty>}
+        {act && open ? <VisitPhotos visitId={v.id} /> : null}
+      </Section>
 
       {act && open ? (
         <Section title="Parts used">
