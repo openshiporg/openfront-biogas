@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { q, company } from '../../lib/server'
+import { q, company, viewer } from '../../lib/server'
 import { label, money, when } from '../../lib/format'
 import { Page, Row, Section, Status, Tabs, Meta, Empty } from '../../components/ui'
 
@@ -15,13 +15,14 @@ const VIEWS = [
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const sp = await searchParams
   const view = VIEWS.find(v => v.key === sp.view) ?? VIEWS[0]
-  const co = await company()
+  const [co, me] = await Promise.all([company(), viewer()])
   const d = await q<any>(`query($s: [String!]) {
     orders(where: { status: { in: $s } }, orderBy: [{ createdAt: desc }], take: 200) { id number status fulfilment channel totalAmount balanceAmount currencyCode stockShort createdAt confirmedAt customer { name } branch { name } plan { status } lines(where: { kind: { equals: "product" } }) { name quantity } }
     ${VIEWS.map(v => `${v.key}: ordersCount(where: { status: { in: ${JSON.stringify(v.status)} } })`).join('\n')}
   }`, { s: view.status })
   return (
     <Page title="Orders">
+      {me.can('canManageOrders') ? <Link href="/dashboard/platform/orders/new" className="w-fit rounded border px-3 py-2 text-sm hover:bg-muted">New order</Link> : null}
       <Tabs active={view.key} items={VIEWS.map(v => ({ key: v.key, label: v.label, href: `/dashboard/platform/orders?view=${v.key}`, count: d[v.key] }))} />
       <Section title={view.label}>
         {d.orders.length ? d.orders.map((o: any) => (

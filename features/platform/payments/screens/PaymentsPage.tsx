@@ -4,13 +4,14 @@ import { label, money, when } from '../../lib/format'
 import { Page, Row, Section, Status, Tabs, Meta, Empty } from '../../components/ui'
 import { ActionButton } from '../../components/ActionButton'
 import { CommandForm } from '../../components/CommandForm'
+import { ReconcileList } from '../components/ReconcileList'
 
 const VIEWS = [
   { key: 'verify', label: 'To verify', status: ['submitted'] },
   { key: 'received', label: 'Received', status: ['verified', 'captured', 'partially_refunded'] },
   { key: 'rejected', label: 'Rejected', status: ['rejected'] },
   { key: 'refunded', label: 'Refunded', status: ['refunded', 'partially_refunded'] },
-  { key: 'unknown', label: 'Card, unconfirmed', status: ['unknown'] },
+  { key: 'reconcile', label: 'Read card outcomes', status: ['unknown'] },
 ]
 
 const FOR = `session { purpose publicCode order { id number } visit { id number } ticket { id number } } order { id number } customer { name phone }`
@@ -21,6 +22,12 @@ const FOR = `session { purpose publicCode order { id number } visit { id number 
  */
 export default async function PaymentsPage({ searchParams }: { searchParams: Promise<{ view?: string; method?: string }> }) {
   const sp = await searchParams
+  if (sp.view === 'reconcile' || sp.view === 'unknown') return (
+    <Page title="Payments">
+      <Tabs active="reconcile" items={VIEWS.map(v => ({ key: v.key, label: v.label, href: `/dashboard/platform/payments?view=${v.key}` }))} />
+      <ReconcileList />
+    </Page>
+  )
   const view = VIEWS.find(v => v.key === sp.view) ?? VIEWS[0]
   const [co, me] = await Promise.all([company(), viewer()])
   const where: any = { status: { in: view.status } }

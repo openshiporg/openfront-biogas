@@ -6,6 +6,7 @@ import { Page, Row, Section, Status, Meta, Empty } from '../../components/ui'
 import { ActionButton } from '../../components/ActionButton'
 import { CommandForm, type FormField } from '../../components/CommandForm'
 import { FulfilStep } from '../components/FulfilStep'
+import { OrderExtras } from '../components/OrderExtras'
 
 /** The next fulfilment step for an order, by status and how it is fulfilled. */
 function nextStep(status: string, fulfilment: string): { step: string; label: string } | null {
@@ -131,9 +132,11 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
           <Meta>The refund follows the cancellation policy: within the cooling-off window it is in full; before picking, the deposit less the survey fee.</Meta>
           <CommandForm op="cancelOrder" submit="Cancel order" paths={[path, '/dashboard/platform/orders']}
             nest={{ input: { fields: ['reason', 'byCompany', 'payoutReference'], fixed: { orderId: o.id } } }}
-            fields={[{ name: 'reason', label: 'Reason', required: true, width: 'lg' }, { name: 'byCompany', label: 'Who cancels', kind: 'select', width: 'md', options: [{ value: '', label: 'The customer' }, { value: 'true', label: 'We do (full refund)' }] }, ...(o.paidAmount > 0 ? [{ name: 'payoutReference', label: 'Reference of the refund you sent', width: 'md' as const }] : [])]} />
+            fields={[{ name: 'reason', label: 'Reason', required: true, width: 'lg' }, { name: 'byCompany', label: 'We cancel (full refund)', kind: 'boolean', width: 'md' }, ...(o.paidAmount > 0 ? [{ name: 'payoutReference', label: 'Reference of the refund you sent', width: 'md' as const }] : [])]} />
         </Section>
       ) : null}
+
+      <OrderExtras orderId={o.id} />
 
       {me.can('canManageSettings') || me.can('canReadReports') ? <Section title="History">
         {d.auditEvents.map((e: any) => (
